@@ -1,0 +1,11 @@
+# Build context for the nginx image is the repository root; it only needs frontend/ and nginx/.
+.git
+backend
+docs
+dist
+frontend/node_modules
+frontend/dist
+.local
+.venv
+scripts
+**/.env

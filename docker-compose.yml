@@ -1,0 +1,83 @@
+# Yagona oyna Akademiyasi. POSTGRES_PASSWORD and PUBLIC_BASE_URL are required in .env.
+name: academy
+
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-production}
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-academy}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-academy}
+  MEDIA_ROOT: /data/media
+  PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+  APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Tashkent}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  SESSION_IDLE_MINUTES: ${SESSION_IDLE_MINUTES:-60}
+  SESSION_ABSOLUTE_HOURS: ${SESSION_ABSOLUTE_HOURS:-12}
+  LOGIN_MAX_FAILURES: ${LOGIN_MAX_FAILURES:-5}
+  LOGIN_LOCK_MINUTES: ${LOGIN_LOCK_MINUTES:-15}
+  CERT_STATUS_API_KEYS: ${CERT_STATUS_API_KEYS:-}
+  CERT_SIGNATORY_NAME: ${CERT_SIGNATORY_NAME:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5-5}
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-academy}
+      POSTGRES_USER: ${POSTGRES_USER:-academy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    image: academy-api:${APP_VERSION:-dev}
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      API_WORKERS: ${API_WORKERS:-4}
+    volumes:
+      - media:/data/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  worker:
+    image: academy-api:${APP_VERSION:-dev}
+    build: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "app.worker"]
+    environment: *app-env
+    volumes:
+      - media:/data/media
+    depends_on:
+      api:
+        condition: service_healthy  # migrations have run
+
+  nginx:
+    image: academy-web:${APP_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - media:/data/media:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  media:

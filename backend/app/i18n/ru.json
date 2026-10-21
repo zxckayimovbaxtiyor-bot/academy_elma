@@ -1,0 +1,81 @@
+{
+  "import": {
+    "employee_id_empty": "employee_id не заполнен",
+    "employee_id_invalid": "Некорректный employee_id: «{value}»",
+    "employee_id_duplicate": "employee_id повторяется (как в строке {first_row})",
+    "full_name_empty": "ФИО не заполнено",
+    "full_name_too_long": "ФИО слишком длинное",
+    "branch_code_empty": "Код филиала не заполнен",
+    "branch_not_found": "Код филиала не найден: {code}",
+    "region_empty": "Регион не заполнен",
+    "region_mismatch": "Регион не соответствует филиалу: «{value}» (регион филиала: {expected})",
+    "role_empty": "Роль не заполнена",
+    "role_unknown": "Неизвестная роль: «{value}»",
+    "language_invalid": "Некорректный язык: «{value}» (допустимо uz или ru)"
+  },
+  "csv": {
+    "row": "Строка",
+    "employee_id": "employee_id",
+    "problem": "Проблема",
+    "full_name": "ФИО",
+    "branch_code": "Код филиала",
+    "branch": "Филиал",
+    "temp_password": "Временный пароль",
+    "metric": "Показатель",
+    "value": "Значение",
+    "region": "Регион",
+    "wave": "Волна",
+    "job_role": "Роль",
+    "status": "Статус",
+    "overdue": "Просрочено",
+    "modules_certified": "Сертифицировано модулей",
+    "last_seen": "Последняя активность",
+    "learners": "Сотрудники",
+    "certified": "Сертифицировано",
+    "certified_pct": "Сертифицировано, %",
+    "in_progress": "В процессе",
+    "not_started": "Не начинали",
+    "recert_required": "Повторная сертификация",
+    "readiness": "Готовность",
+    "module": "Модуль",
+    "lessons": "Уроки",
+    "attempts": "Попытки",
+    "last_score": "Последний результат, %",
+    "certificate": "Сертификат",
+    "issued": "Дата выдачи",
+    "recertify_by": "Срок повторной сертификации"
+  },
+  "pdf": {
+    "brand": "Академия Единого окна",
+    "number": "№ сертификата",
+    "title": "СЕРТИФИКАТ",
+    "confirms": "Настоящим подтверждается, что",
+    "body_operator": "успешно прошёл(-а) обучение работе в системе «Единое окно» Elma365 и получил(-а) квалификацию:",
+    "body_module": "успешно прошёл(-а) учебный модуль по работе в системе «Единое окно» Elma365:",
+    "qualification": "Оператор Единого окна",
+    "modules": "Модули",
+    "issued": "Дата выдачи",
+    "release": "релиз Elma365 {codes}",
+    "signatory_title": "Руководитель Центра компетенций",
+    "verify": "Проверка",
+    "code": "Код"
+  },
+  "report": {
+    "status": {
+      "certified": "Сертифицирован",
+      "recert_required": "Повторная сертификация",
+      "in_progress": "В процессе",
+      "not_started": "Не начинал"
+    },
+    "readiness": {
+      "ready": "Готов",
+      "at_risk": "Под угрозой",
+      "not_ready": "Не готов"
+    },
+    "yes": "Да",
+    "no": "Нет",
+    "total": "Назначено",
+    "overdue": "Просрочено",
+    "branches": "Филиалы"
+  }
+}

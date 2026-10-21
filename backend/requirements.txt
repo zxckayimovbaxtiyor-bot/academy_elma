@@ -1,0 +1,10 @@
+# Runtime dependencies (pinned). Approved list: docs/PLAN.md §8.
+fastapi==0.146.0
+uvicorn==0.54.0
+sqlalchemy==2.1.5
+alembic==1.20.0
+psycopg[binary]==3.3.6
+argon2-cffi==25.1.0
+reportlab==5.0.1  # certificate PDF + its built-in QR widget
+anthropic==1.15.0  # AI drafting only; imported lazily, only when ANTHROPIC_API_KEY is set
+tzdata==2026.5; sys_platform == "win32"  # Windows has no system IANA timezone database

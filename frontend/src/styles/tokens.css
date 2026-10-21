@@ -1,0 +1,58 @@
+/* Colours and spacing taken from the mockups. Inter is bundled (OFL), never fetched. */
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --c-primary: #0b5659;
+  --c-primary-dark: #083f41;
+  --c-primary-soft: #e6f0ef;
+  --c-primary-line: #b9d3d1;
+  --c-accent: #5fb3a9;
+
+  --c-bg: #f5f6f4;
+  --c-surface: #ffffff;
+  --c-surface-2: #f7faf9;
+  --c-border: #dde3e1;
+  --c-track: #e6ebe9;
+  --c-chip: #eef1f0;
+
+  --c-text: #172624;
+  --c-text-2: #3e4b49;
+  --c-muted: #5b6866;
+  --c-faint: #8a9593;
+
+  --c-success: #1d6b45;
+  --c-success-soft: #e4f2ea;
+  --c-warning: #8a4b08;
+  --c-warning-soft: #fbf0e1;
+  --c-danger: #a3271b;
+  --c-danger-soft: #f8e4e1;
+
+  --c-player: #0e1817;
+  --c-player-2: #162321;
+
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(23, 38, 36, 0.04);
+  --shadow-pop: 0 12px 32px rgba(23, 38, 36, 0.16);
+
+  --gap-1: 4px;
+  --gap-2: 8px;
+  --gap-3: 12px;
+  --gap-4: 16px;
+  --gap-5: 24px;
+  --gap-6: 32px;
+  --gap-7: 48px;
+
+  --tap: 44px; /* minimum click target */
+  --content: 1280px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

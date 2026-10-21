@@ -1,0 +1,29 @@
+{
+  "name": "academy-web",
+  "private": true,
+  "version": "0.6.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "build": "tsc --noEmit && node scripts/check-i18n.mjs && npm test && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "hls.js": "1.7.3",
+    "i18next": "26.5.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "17.1.0",
+    "react-router-dom": "7.18.4"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "5.9.3",
+    "vite": "8.3.4"
+  }
+}
