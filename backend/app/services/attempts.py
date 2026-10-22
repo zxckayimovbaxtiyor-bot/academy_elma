@@ -200,6 +200,9 @@ def finalize_overdue(db: Session, now: datetime) -> int:
 def eligibility(db: Session, user: AppUser, module: Module, now: datetime) -> Eligibility:
     """Every reason the learner can't start now (all of them, so the UI can list them)."""
     reasons: list[Reason] = []
+    from app.services.practice import requirements_met
+    if not requirements_met(db, user.id, module.id, "before_test"):
+        reasons.append(Reason("practice_required"))
     if module.type == ModuleType.faq:
         reasons.append(Reason("module.no_test"))
     if module.type == ModuleType.product and not access.holds_core_certificate(db, user.id):

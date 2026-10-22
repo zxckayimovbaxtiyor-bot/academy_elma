@@ -32,6 +32,7 @@ from app.models import (
     Course,
     ElmaRelease,
     JobRole,
+    Lesson,
     Module,
     Region,
     VideoAsset,
@@ -457,6 +458,7 @@ def main(argv: list[str] | None = None) -> int:
     p_seed.add_argument("--synthetic", action="store_true")
     p_seed.add_argument("--password", help="password for all synthetic users (required)")
     p_seed.add_argument("--demo", action="store_true", help="generated demo lessons (needs ffmpeg)")
+    p_seed.add_argument("--practice", action="store_true", help="publish the synthetic consumer-loan practice in Core")
 
     p_admin = sub.add_parser("create-admin", help="bootstrap an admin or methodologist")
     p_admin.add_argument("--employee-id", required=True)
@@ -500,6 +502,29 @@ def main(argv: list[str] | None = None) -> int:
                     employee_id = seed_data.DEMO_PATH["employee_id"]
                     print(f"demo learner {employee_id} (Core + Farovon) created.")
                     print(f"Temporary password (shown once, change at first login): {temp}")
+            if args.practice or args.demo:
+                from app.models.practice import PracticeScenario, PracticeScenarioVersion
+                from app.schemas.practice import ScenarioIn
+                from app.services import practice
+                from app.services.practice_demo import demo_definition
+                admin = db.scalar(select(AppUser).where(AppUser.access_role == AccessRole.admin).order_by(AppUser.id))
+                if admin is None:
+                    print("error: create an admin first (create-admin)", file=sys.stderr)
+                    return 1
+                core = db.scalar(select(Module).where(Module.code == "CORE"))
+                definition = demo_definition()
+                existing = db.scalar(select(PracticeScenario.id).join(PracticeScenarioVersion,
+                    PracticeScenarioVersion.scenario_id == PracticeScenario.id).where(PracticeScenario.module_id == core.id,
+                    PracticeScenarioVersion.definition["title"]["ru"].astext == definition.title.ru).limit(1))
+                if existing is None:
+                    lesson_id = db.scalar(select(Lesson.id).where(Lesson.module_id == core.id).order_by(Lesson.sort).limit(1))
+                    row = practice.create(db, admin, ScenarioIn(module_id=core.id, lesson_id=lesson_id, definition=definition))
+                    v = practice.version(db, row.id, published=False)
+                    v.preview_revision = v.revision
+                    practice.publish(db, admin, row.id, v.revision)
+                    print(f"demo practice: {row.id} published (synthetic data only)")
+                else:
+                    print(f"demo practice: {existing} already exists; preserved")
         elif args.command == "create-admin":
             try:
                 temp = create_staff(db, args.employee_id, args.full_name, AccessRole(args.role))

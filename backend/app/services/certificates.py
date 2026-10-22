@@ -191,9 +191,13 @@ def _issue(db: Session, user: AppUser, kind: CertificateKind, now: datetime, **v
     return cert
 
 
-def issue_module(db: Session, attempt: TestAttempt, now: datetime) -> Certificate:
+def issue_module(db: Session, attempt: TestAttempt, now: datetime) -> Certificate | None:
     """A passed test: new module certificate, then the operator certificate is re-evaluated."""
     user = db.get(AppUser, attempt.user_id)
+    db.scalar(select(AppUser.id).where(AppUser.id == user.id).with_for_update())
+    from app.services.practice import requirements_met
+    if not requirements_met(db, user.id, attempt.module_id, "before_certificate"):
+        return None
     module = db.get(Module, attempt.module_id)
     release = db.get(ElmaRelease, attempt.release_id)
     recert_due_at = None

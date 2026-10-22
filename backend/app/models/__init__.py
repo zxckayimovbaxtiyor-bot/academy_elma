@@ -16,6 +16,7 @@ from app.models.org import Branch, JobRole, Region
 from app.models.progress import LessonProgress
 from app.models.users import AppUser, AuditEvent, UserImport, UserSession
 from app.models.waves import Wave, WaveBranch, WaveModuleRole
+from app.models.practice import PracticeScenario, PracticeScenarioVersion, PracticeAssignment, PracticeSession, PracticeAction, PracticeResult, PracticeAsset
 
 __all__ = [
     "AppUser",

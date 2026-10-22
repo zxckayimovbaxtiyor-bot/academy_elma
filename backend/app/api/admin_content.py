@@ -285,6 +285,9 @@ def delete_lesson(
         raise AppError(409, "lesson.already_published")
     if content.has_questions(db, [v.id for v in versions]):
         raise AppError(409, "lesson.has_questions")
+    from app.models.practice import PracticeScenario
+    if db.scalar(select(PracticeScenario.id).where(PracticeScenario.lesson_id == lesson.id).limit(1)):
+        raise AppError(409, "practice.lesson_in_use")
     for version in versions:
         content.delete_version(db, version)
     audit.record(

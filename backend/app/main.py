@@ -17,6 +17,7 @@ from app.api import (
     reference,
     reports,
     system,
+    practice,
 )
 from app.auth.csrf import CsrfHeaderMiddleware
 from app.config import settings
@@ -54,6 +55,7 @@ def create_app() -> FastAPI:
         admin_questions.router,
         admin_waves.router,
         admin_ai.router,
+        practice.router,
     )
     for router in routers:
         app.include_router(router, prefix=API_PREFIX)
