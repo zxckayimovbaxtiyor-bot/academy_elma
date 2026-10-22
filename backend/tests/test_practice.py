@@ -128,11 +128,41 @@ def test_database_rejects_mutation_of_published_version(db, setup):
                 text("UPDATE practice_scenario_version SET revision=99 WHERE id=:id"),
                 {"id": v.id},
             )
+
     with pytest.raises(DBAPIError):
         with db.begin_nested():
             db.execute(
                 text("DELETE FROM practice_scenario_version WHERE id=:id"), {"id": v.id}
             )
+
+
+def test_adding_program_preserves_active_session_and_completed_result(db, setup):
+    admin, user, row = setup
+    completed = practice.start(db, user, row.id, "exam")
+    finish_demo(db, user, completed)
+    active = practice.start(db, user, row.id, "guided")
+    advance(db, user, active)
+    advance(db, user, active)
+    advance(db, user, active, {"client_id": "TEST-001"}, kind="save")
+    snapshots = {
+        s.id: deepcopy(practice.payload(db, s)) for s in (active, completed)
+    }
+    added = practice.create(
+        db, admin,
+        ScenarioIn(module_id=row.module_id, definition=demo_definition()),
+    )
+    draft = practice.version(db, added.id, published=False)
+    draft.preview_revision = draft.revision
+    practice.publish(db, admin, added.id, draft.revision)
+    db.expire_all()
+    for session_id, before in snapshots.items():
+        session = practice.owned(db, user, session_id)
+        assert practice.payload(db, session) == before
+    # The existing session can continue from its saved stage after publication.
+    active = practice.owned(db, user, active.id)
+    old_revision = active.revision
+    advance(db, user, active, kind="save")
+    assert active.revision == old_revision + 1
 
 
 def test_resume_and_save_are_server_side(db, setup):

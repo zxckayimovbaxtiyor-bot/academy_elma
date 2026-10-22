@@ -192,7 +192,7 @@ export function TestTake() {
               {t("take.flag")}
             </button>
             <div className="row">
-              <button className="btn" disabled={current === 0} onClick={() => setCurrent(current - 1)}>
+              <button className="back-link" disabled={current === 0} onClick={() => setCurrent(current - 1)}>
                 <Icon name="arrowLeft" size={18} />
                 {t("take.prev")}
               </button>

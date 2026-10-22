@@ -265,6 +265,26 @@
   font-size: 28px;
 }
 @media (max-width: 900px) {
+  .practice-session .practice-shell {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .practice-session .practice-side {
+    max-height: 130px;
+    padding: 8px 12px;
+  }
+  .practice-session .practice-side > strong,
+  .practice-session .practice-side > .small {
+    display: none;
+  }
+  .practice-session .practice-side ol {
+    margin: 0;
+  }
+  .practice-session .practice-footer {
+    gap: 8px;
+    max-height: 120px;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
   .practice-shell,
   .practice-builder {
     grid-template-columns: 1fr;
@@ -310,4 +330,72 @@
   .a-shell:has(.practice-builder) .a-main {
     padding: 20px 16px;
   }
+}
+.learner-frame {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.learner-frame > .topbar {
+  flex: none;
+}
+.learner-frame > .page {
+  flex: 1;
+  min-height: 0;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  overflow: hidden;
+}
+.practice-session {
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+}
+.practice-session > * {
+  flex-shrink: 0;
+}
+.practice-session > header h1 {
+  font-size: clamp(20px, 2vw, 28px);
+}
+.practice-session > .notice {
+  max-height: 80px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.practice-session > .practice-shell,
+.practice-session > .practice-result-scroll {
+  flex: 1;
+  min-height: 0;
+}
+.practice-session .practice-side {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.practice-session .practice-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.practice-session .practice-toolbar,
+.practice-session .practice-footer {
+  flex-shrink: 0;
+  padding: 12px 20px;
+}
+.practice-content,
+.practice-result-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.practice-content > details {
+  margin: 0 20px 20px;
+}
+.practice-result-scroll > details {
+  margin-top: 12px;
 }

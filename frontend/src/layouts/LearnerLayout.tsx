@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
 
 import type { Lang } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
@@ -75,6 +75,7 @@ function UserMenu() {
 export function LearnerLayout() {
   const { t } = useTranslation();
   const { me } = useAuth();
+  const practiceSession = useMatch("/practice/sessions/:sessionId");
   const items = [
     { to: "/", label: t("nav.home"), end: true },
     { to: "/courses", label: t("nav.courses") },
@@ -85,7 +86,7 @@ export function LearnerLayout() {
   if (me?.access_role === "branch_head") items.push({ to: "/reports", label: t("nav.reports") });
   if (canEditContent(me)) items.push({ to: "/admin", label: t("nav.admin") });
   return (
-    <>
+    <div className={practiceSession ? "learner-frame" : undefined}>
       <header className="topbar">
         <div className="container topbar-inner">
           <Brand />
@@ -105,7 +106,7 @@ export function LearnerLayout() {
       <main className="container page">
         <Outlet />
       </main>
-    </>
+    </div>
   );
 }
 

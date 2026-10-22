@@ -137,6 +137,35 @@ function LessonView({
       <Breadcrumbs items={crumbs} />
       <div className="lesson-grid">
         <div className="lesson-main">
+          <nav className="lesson-navigation" aria-label={t("module.lessons")}>
+            {player.prev_lesson_id !== null ? (
+              <Link className="back-link" to={hrefFor(player.prev_lesson_id)}>
+                <Icon name="arrowLeft" size={18} />
+                {t("lesson.prev")}
+              </Link>
+            ) : (
+              <button className="back-link" disabled>
+                <Icon name="arrowLeft" size={18} />
+                {t("lesson.prev")}
+              </button>
+            )}
+            {player.next_lesson_id !== null ? (
+              <Link className="btn btn-primary" to={hrefFor(player.next_lesson_id)}>
+                {t("lesson.next")}
+                <Icon name="arrowRight" size={18} />
+              </Link>
+            ) : testOpen ? (
+              <Link className="btn btn-primary" to={`/courses/${player.module_id}/test`}>
+                {t("lesson.to_test")}
+                <Icon name="arrowRight" size={18} />
+              </Link>
+            ) : (
+              <button className="btn" disabled>
+                {t("lesson.next")}
+                <Icon name="arrowRight" size={18} />
+              </button>
+            )}
+          </nav>
           <VideoPlayer
             ref={handle}
             player={player}
@@ -199,35 +228,7 @@ function LessonView({
                 <span className="chip">{t("lesson.synthetic")}</span>
               </div>
             </div>
-            <div className="row">
-              {player.prev_lesson_id !== null ? (
-                <Link className="btn" to={hrefFor(player.prev_lesson_id)}>
-                  <Icon name="arrowLeft" size={18} />
-                  {t("lesson.prev")}
-                </Link>
-              ) : (
-                <span className="btn" aria-disabled="true">
-                  <Icon name="arrowLeft" size={18} />
-                  {t("lesson.prev")}
-                </span>
-              )}
-              {player.next_lesson_id !== null ? (
-                <Link className="btn" to={hrefFor(player.next_lesson_id)}>
-                  {t("lesson.next")}
-                  <Icon name="arrowRight" size={18} />
-                </Link>
-              ) : testOpen ? (
-                <Link className="btn btn-primary" to={`/courses/${player.module_id}/test`}>
-                  {t("lesson.to_test")}
-                  <Icon name="arrowRight" size={18} />
-                </Link>
-              ) : (
-                <span className="btn" aria-disabled="true">
-                  {t("lesson.next")}
-                  <Icon name="arrowRight" size={18} />
-                </span>
-              )}
-            </div>
+
           </div>
 
           <div className="card tabs-card">

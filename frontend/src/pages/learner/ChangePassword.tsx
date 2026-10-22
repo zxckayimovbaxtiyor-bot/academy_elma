@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../../api/learner";
 import { useAuth } from "../../auth/AuthContext";
 import { ErrorLine } from "../../components/Feedback";
+import { Icon } from "../../components/Icon";
 import { landing } from "../../lib/roles";
 
 export function ChangePassword() {
@@ -63,7 +64,8 @@ export function ChangePassword() {
           {t("password.submit")}
         </button>
         {!forced && (
-          <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
+          <button type="button" className="back-link" onClick={() => navigate(-1)}>
+            <Icon name="arrowLeft" size={18} />
             {t("app.back")}
           </button>
         )}

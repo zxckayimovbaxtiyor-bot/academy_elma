@@ -17,6 +17,7 @@ import {
   type Value,
 } from "../api/practice";
 import { ErrorLine, ErrorState, PageLoader } from "../components/Feedback";
+import { Icon } from "../components/Icon";
 import { useApi } from "../lib/useApi";
 import { pick, useLang } from "../lib/lang";
 import { Bilingual, ScenarioScreen } from "./Renderer";
@@ -1452,10 +1453,11 @@ export function PracticeBuilder() {
               />
               <div className="row">
                 <button
-                  className="btn"
+                  className="back-link"
                   disabled={busy || !preview.history.length}
                   onClick={() => previewStep("back")}
                 >
+                  <Icon name="arrowLeft" size={18} />
                   {t("practice.back")}
                 </button>
                 {preview.can_finish && (

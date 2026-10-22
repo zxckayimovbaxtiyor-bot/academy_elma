@@ -82,7 +82,8 @@ export function TestResult() {
                 <Icon name="certificate" size={18} />
                 {t("result.to_certificates")}
               </Link>
-              <Link className="btn" to="/courses">
+              <Link className="back-link" to="/courses">
+                <Icon name="arrowLeft" size={18} />
                 {t("result.to_courses")}
               </Link>
             </div>

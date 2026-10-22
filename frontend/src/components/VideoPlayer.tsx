@@ -8,6 +8,7 @@ import type { Fragment, Heartbeat, Lang, Player } from "../api/types";
 import { clock } from "../lib/format";
 import { useLang } from "../lib/lang";
 import { PlayTracker } from "../lib/watch";
+import { SeekFrame } from "../lib/seekFrame";
 import { Icon } from "./Icon";
 
 /**
@@ -77,6 +78,8 @@ export const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   const uiLang = useLang();
   const box = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  const frame = useRef<HTMLCanvasElement>(null);
+  const seekFrame = useRef<SeekFrame | null>(null);
   const hls = useRef<Hls | null>(null);
   const tracker = useRef(new PlayTracker());
   const callbacks = useRef(props);
@@ -131,6 +134,16 @@ export const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
   // --- loading the stream -----------------------------------------------------------------
+
+  useEffect(() => {
+    if (!video.current || !frame.current) return;
+    const held = new SeekFrame(video.current, frame.current);
+    seekFrame.current = held;
+    return () => {
+      held.dispose();
+      seekFrame.current = null;
+    };
+  }, [player.hls_url, retry]);
 
   useEffect(() => {
     const el = video.current;
@@ -332,6 +345,10 @@ export const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
         target = lim;
         flash(t("player.seek_blocked"));
       }
+      if (Math.abs(el.currentTime - target) < 0.001) return;
+      tracker.current.close();
+      seekFrame.current?.hold();
+      setTime(target);
       el.currentTime = target;
     },
     [duration, flash, t],
@@ -393,29 +410,32 @@ export const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
 
   return (
     <div className="player" ref={box} tabIndex={0} onKeyDown={onKeyDown} aria-label={t("player.label")}>
-      <video
-        ref={video}
-        playsInline
-        disablePictureInPicture
-        preload="auto"
-        onClick={toggle}
-        onPlay={() => setPlaying(true)}
-        onPause={onStop}
-        onEnded={onStop}
-        onTimeUpdate={onTimeUpdate}
-        onSeeking={onSeeking}
-        onRateChange={onRateChange}
-        onWaiting={() => setWaiting(true)}
-        onPlaying={() => setWaiting(false)}
-        onCanPlay={() => setWaiting(false)}
-        onError={() => !hls.current && setFailed(true)}
-      >
-        {LANGS.map((l) =>
-          player.subtitles[l] ? (
-            <track key={l} kind="subtitles" srcLang={l} label={t(`player.sub_${l}`)} src={player.subtitles[l]!} />
-          ) : null,
-        )}
-      </video>
+      <div className="player-picture">
+        <video
+          ref={video}
+          playsInline
+          disablePictureInPicture
+          preload="auto"
+          onClick={toggle}
+          onPlay={() => setPlaying(true)}
+          onPause={onStop}
+          onEnded={onStop}
+          onTimeUpdate={onTimeUpdate}
+          onSeeking={onSeeking}
+          onRateChange={onRateChange}
+          onWaiting={() => setWaiting(true)}
+          onPlaying={() => setWaiting(false)}
+          onCanPlay={() => setWaiting(false)}
+          onError={() => !hls.current && setFailed(true)}
+        >
+          {LANGS.map((l) =>
+            player.subtitles[l] ? (
+              <track key={l} kind="subtitles" srcLang={l} label={t(`player.sub_${l}`)} src={player.subtitles[l]!} />
+            ) : null,
+          )}
+        </video>
+        <canvas ref={frame} className="player-held-frame" hidden aria-hidden="true" />
+      </div>
 
       {failed ? (
         <div className="player-overlay">

@@ -10,6 +10,8 @@ import type {
   SummaryItem,
 } from "../api/practice";
 import { useLang } from "../lib/lang";
+import { NumberInput } from "./NumberInput";
+import { numberText } from "../lib/numberInput";
 import "../styles/practice.css";
 
 type Props = {
@@ -71,24 +73,18 @@ function Standard(p: Props) {
   let node: ReactNode;
   switch (c.type) {
     case "text":
-    case "number":
       node = (
         <input
           {...input}
-          type={c.type}
+          type="text"
           value={value === null ? "" : String(value)}
           maxLength={2000}
-          onChange={(e) =>
-            change(
-              c.type === "number"
-                ? e.target.value === ""
-                  ? null
-                  : Number(e.target.value)
-                : e.target.value,
-            )
-          }
+          onChange={(e) => change(e.target.value)}
         />
       );
+      break;
+    case "number":
+      node = <NumberInput {...input} value={value} change={change} />;
       break;
     case "checkbox":
       node = (
@@ -206,9 +202,11 @@ function Standard(p: Props) {
               <dd>
                 {typeof v === "boolean"
                   ? t(v ? "practice.yes" : "practice.no")
-                  : typeof v === "object" && v !== null
-                    ? v[lang]
-                    : String(v ?? "—")}
+                  : typeof v === "number"
+                    ? numberText(v)
+                    : typeof v === "object" && v !== null
+                      ? v[lang]
+                      : String(v ?? "—")}
               </dd>
             </div>
           ))}
@@ -298,7 +296,9 @@ export function ScenarioScreen({
   const previous = useRef(screen.id);
   useEffect(() => {
     if (previous.current !== screen.id) {
-      heading.current?.focus();
+      const content = heading.current?.closest(".practice-content");
+      if (content) content.scrollTop = 0;
+      heading.current?.focus({ preventScroll: true });
       previous.current = screen.id;
     }
   }, [screen.id]);

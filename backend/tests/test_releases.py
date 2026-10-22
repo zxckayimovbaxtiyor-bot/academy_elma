@@ -150,3 +150,44 @@ def test_new_lessons_cannot_be_unmarked_and_empty_drafts_can_be_deleted(db, clie
 def test_releases_are_admin_only(db, client, reference):
     login(client, make_user(db, role=AccessRole.methodologist))
     assert client.get(RELEASES).status_code == 403
+
+
+def test_adding_programs_and_lessons_preserves_existing_watch_progress(
+    db, client, make_client, reference, clock
+):
+    from tests.factories import complete_lesson
+
+    _admin(db, client)
+    make_wave(db, [reference.tashkent], {})
+    core = reference.modules["CORE"]
+    partial, partial_version = make_live_lesson(db, core, duration=60)
+    completed, completed_version = make_live_lesson(db, core, duration=60)
+    user = make_learner(db, reference)
+    complete_lesson(db, user, completed_version)
+    learner = make_client()
+    login(learner, user)
+    heartbeat = f"/api/v1/me/lessons/{partial.id}/heartbeat"
+    learner.post(heartbeat, json={"version_id": partial_version.id, "ranges": []})
+    clock.advance(seconds=20)
+    learner.post(heartbeat, json={"version_id": partial_version.id, "ranges": [[0, 20]]})
+    before = {
+        lesson.id: learner.get(f"/api/v1/me/lessons/{lesson.id}").json()
+        for lesson in (partial, completed)
+    }
+    assert before[partial.id]["progress"]["watched_s"] == 20
+    assert before[completed.id]["progress"]["completed"]
+
+    release = client.post(RELEASES, json={"code": "2026.12"}).json()
+    # Add both a lesson to the existing program and content for another program.
+    for module in (core, reference.modules["CRM"]):
+        created = client.post(
+            f"/api/v1/admin/modules/{module.id}/lessons",
+            json={"title_uz": "Yangi dars", "title_ru": "Новый урок"},
+        ).json()
+        _make_ready(db, client, created["draft"]["id"])
+    assert client.post(f"{RELEASES}/{release['id']}/publish").status_code == 200
+    for lesson in (partial, completed):
+        after = learner.get(f"/api/v1/me/lessons/{lesson.id}").json()
+        assert after["version_id"] == before[lesson.id]["version_id"]
+        assert after["progress"] == before[lesson.id]["progress"]
+        assert after["seek_limit_s"] == before[lesson.id]["seek_limit_s"]
