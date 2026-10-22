@@ -8,6 +8,20 @@ For the prepared Windows installation without Docker, see [LOCAL-RUN.md](LOCAL-R
 The audit, staged modernization plan and completed first-stage fixes are recorded in
 [docs/MODERNIZATION.md](docs/MODERNIZATION.md).
 
+## Interactive practice
+
+The Practice module adds a versioned scenario engine, guided training, a free sandbox
+with synthetic applications, server-graded practical exams, a visual RU/UZ constructor,
+and branch-scoped analytics. Open `/practice` or `/admin/practice`.
+Existing certification rules stay unchanged until an author explicitly requires practice.
+
+After applying migrations, `python -m app.cli seed --practice` from `backend/` publishes
+the synthetic consumer-loan example in Core (requires an existing admin).
+`seed --demo` also includes it. No real bank integrations are used.
+
+See [the architecture audit](docs/PRACTICE_ARCHITECTURE.md) and
+[implementation, API, author/learner instructions and verification](docs/PRACTICE_IMPLEMENTATION.md).
+
 **Status: Phase 7 (staff screens).** Done so far:
 - Phase 1: schema, auth, CSV user import, seed, worker and containers.
 - Phase 2: modules and lessons, Elma365 releases (draft → publish), video upload with HLS transcoding, subtitles and PDFs, and the server-side 90 % watch rule.
