@@ -1501,6 +1501,18 @@ a.lesson-row:hover {
 
 /* --- narrower screens ------------------------------------------------------------------ */
 
+/* The practice link expands the main menu; keep every item reachable on laptops and phones. */
+@media (max-width: 1320px) {
+  .topbar-inner { flex-wrap: wrap; gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+  .topbar-inner > .row { margin-left: auto; }
+  .topbar-inner .nav { order: 3; flex-basis: 100%; min-width: 0; overflow-x: auto; }
+  .topbar-inner .nav a { flex: none; min-height: 44px; padding: 0 12px; }
+}
+@media (max-width: 600px) {
+  .container { padding-left: 16px; padding-right: 16px; }
+  .container.page { padding: 20px 16px 40px; }
+}
+
 @media (max-width: 1480px) {
   /* 1366 px screens: name and branch move into the user menu */
   .user-text {

@@ -14,6 +14,7 @@ import { Users } from "./pages/Users";
 import { Waves } from "./pages/Waves";
 import { ReportUser } from "./reports/ReportUser";
 import { Reports } from "./reports/Reports";
+import { PracticeBuilder } from "../practice/Builder";
 
 /** Everything under /admin (loaded on demand: learners never download it). */
 export default function AdminApp() {
@@ -31,6 +32,7 @@ export default function AdminApp() {
         <Route path="reports" element={admin(<Reports />)} />
         <Route path="reports/users/:userId" element={admin(<ReportUser />)} />
         <Route path="content" element={<Content />} />
+        <Route path="practice" element={<PracticeBuilder />} />
         <Route path="content/modules/:moduleId" element={<Content />} />
         <Route path="content/lessons/:lessonId" element={<LessonAdminPage />} />
         <Route path="questions" element={<Questions />} />

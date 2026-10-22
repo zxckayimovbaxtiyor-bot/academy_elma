@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { PracticeCatalog } from "../../practice/Practice";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { learner } from "../../api/learner";
@@ -288,6 +289,7 @@ function LessonView({
             <LessonList lessons={sideLessons} hrefFor={hrefFor} currentId={player.lesson_id} tracked={!faq} />
           )}
           {module && test && <TestCard module={module} test={test} compact />}
+          {!faq && module && <PracticeCatalog moduleId={module.id} lessonId={player.lesson_id} compact />}
         </aside>
       </div>
     </div>

@@ -11,6 +11,7 @@ import { date, dateTime, pct } from "../../lib/format";
 import { name, pick, useLang } from "../../lib/lang";
 import { useApi } from "../../lib/useApi";
 import { PageHead } from "../ui";
+import { PracticeAnalytics } from "../../practice/Analytics";
 
 /** One learner's modules, attempts and certificates (report drill-down). */
 export function LearnerDetailView({ d, actions }: { d: LearnerDetail; actions?: React.ReactNode }) {
@@ -33,6 +34,7 @@ export function LearnerDetailView({ d, actions }: { d: LearnerDetail; actions?: 
           {d.operator.number && ` · ${d.operator.number}`}
         </span>
       </div>
+      <PracticeAnalytics filters={{user_id:d.user_id}} />
       <section className="card table-card">
         <table className="table">
           <thead>

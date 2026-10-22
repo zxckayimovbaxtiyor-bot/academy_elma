@@ -69,6 +69,16 @@ for (const file of sources(root)) {
 const expand = (prefix, names) => names.map((n) => `${prefix}${n}`);
 const statuses = ["valid", "recert_required", "superseded", "missing"];
 const dynamic = [
+  ...expand("practice.mode.", ["guided", "sandbox", "exam"]),
+  ...expand("practice.component.", ["button", "text", "number", "select", "table", "tabs", "checkbox", "modal", "document", "client", "status", "notification", "image", "hint", "transition"]),
+  ...expand("practice.policy.", ["required", "require_pass", "allow_repeat", "repeat_on_update", "repeat_on_material", "theory_first", "max_attempts", "pass_pct", "gate"]),
+  ...expand("practice.operator_label.", ["present", "eq", "ne", "gte", "lte", "in"]),
+  ...expand("practice.area.", ["x", "y", "width", "height"]),
+  ...expand("practice.metric.", ["started", "completed", "pass_rate", "average_seconds", "retries"]),
+  ...expand("practice.group.", ["branches", "roles"]),
+  ...expand("practice.command.", ["action", "save", "back", "reset", "finish", "navigate", "new_record", "open_record", "delete_record"]),
+  ...expand("errors.practice.", ["not_found", "invalid_action", "incomplete", "invalid_values", "invalid_asset", "lesson_mismatch", "conflict", "preview_required", "no_draft", "theory_required", "attempts_exhausted", "repeat_disabled", "idempotency_conflict", "finished", "action_limit", "record_limit", "lesson_in_use"]),
+  "reason.practice_required",
   ...expand("state.", ["certified", "in_progress", "not_started", "recert_required", "locked"]),
   ...expand("cert_status.", statuses),
   ...expand("home.cert_", statuses),

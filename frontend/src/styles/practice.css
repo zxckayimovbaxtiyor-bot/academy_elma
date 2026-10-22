@@ -1,0 +1,313 @@
+.practice-wrap {
+  flex-wrap: wrap;
+}
+.practice-shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+}
+.practice-side {
+  background: var(--c-surface-2);
+  border-right: 1px solid var(--c-border);
+  padding: 24px;
+}
+.practice-side ol {
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.practice-side li {
+  padding: 10px;
+  border-radius: 8px;
+  color: var(--c-muted);
+  font-size: 13px;
+}
+.practice-side li.active {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  font-weight: 600;
+}
+.practice-side li button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  display: block;
+  background: transparent;
+  border-color: transparent;
+}
+.practice-main {
+  min-width: 0;
+}
+.practice-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--c-border);
+  font-size: 13px;
+  color: var(--c-muted);
+}
+.practice-workspace {
+  padding: 32px;
+  min-height: 360px;
+}
+.practice-workspace h2:focus {
+  outline: none;
+}
+.practice-field {
+  display: grid;
+  gap: 8px;
+  max-width: 700px;
+}
+.practice-field > label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.practice-field input:not([type="checkbox"]),
+.practice-field select,
+.practice-bilingual textarea,
+.practice-builder input,
+.practice-builder select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-s);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+}
+.practice-field input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--c-primary);
+}
+.practice-invalid input,
+.practice-invalid select {
+  border-color: var(--c-danger);
+}
+.practice-document {
+  display: grid;
+  gap: 12px;
+  border: 1px dashed var(--c-primary-line);
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+}
+.practice-highlight {
+  box-shadow: 0 0 0 4px var(--c-primary-soft);
+}
+.practice-table {
+  overflow-x: auto;
+}
+.practice-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.practice-table th,
+.practice-table td {
+  text-align: left;
+  padding: 14px;
+  border-bottom: 1px solid var(--c-border);
+  font-size: 14px;
+}
+.practice-table th {
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+}
+.practice-footer {
+  padding: 20px 32px;
+  border-top: 1px solid var(--c-border);
+}
+.practice-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  border-bottom: 1px solid var(--c-border);
+}
+.practice-summary dt {
+  color: var(--c-muted);
+}
+.practice-summary dd {
+  margin: 0;
+  font-weight: 600;
+}
+.practice-score {
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.practice-history {
+  display: grid;
+  gap: 12px;
+}
+.practice-history a {
+  color: var(--c-primary);
+}
+.practice-image {
+  position: relative;
+  margin: 0;
+}
+.practice-image img {
+  width: 100%;
+  display: block;
+}
+.practice-hotspot {
+  position: absolute;
+  border: 2px solid var(--c-primary);
+  background: rgb(230 240 239 / 0.7);
+  cursor: pointer;
+  overflow: hidden;
+  font: inherit;
+}
+.practice-dialog {
+  border: 1px solid var(--c-border);
+  padding: 32px;
+  border-radius: 16px;
+  max-width: min(90vw, 600px);
+}
+.practice-dialog::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+.practice-preview {
+  max-width: 1100px;
+  width: 94vw;
+  max-height: 90vh;
+  overflow: auto;
+}
+.practice-builder {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.practice-builder-nav {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 8px;
+}
+.practice-builder-nav button {
+  text-align: left;
+  white-space: normal;
+}
+.practice-bilingual {
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+.practice-bilingual label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.practice-bilingual textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+.practice-editor-item {
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  background: var(--c-surface);
+}
+.practice-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.practice-editor-grid label {
+  display: grid;
+  gap: 8px;
+}
+.practice-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 20px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+}
+.practice-flow a {
+  display: inline-flex;
+  padding: 8px 12px;
+  border: 1px solid var(--c-primary-line);
+  border-radius: 8px;
+  color: var(--c-primary);
+  background: var(--c-surface);
+  font-size: 13px;
+}
+.practice-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+.practice-kpis strong {
+  display: block;
+  font-size: 28px;
+}
+@media (max-width: 900px) {
+  .practice-shell,
+  .practice-builder {
+    grid-template-columns: 1fr;
+  }
+  .practice-side {
+    border-right: 0;
+    border-bottom: 1px solid var(--c-border);
+    padding: 16px;
+  }
+  .practice-side ol {
+    display: flex;
+    overflow: auto;
+    margin: 12px 0;
+  }
+  .practice-side li {
+    flex: 0 0 160px;
+  }
+  .practice-builder-nav {
+    position: static;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+  .practice-workspace {
+    padding: 20px;
+  }
+  .practice-bilingual,
+  .practice-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 800px) {
+  .a-shell:has(.practice-builder) {
+    grid-template-columns: minmax(0, 1fr);
+    background: var(--c-bg);
+  }
+  .a-shell:has(.practice-builder) .a-side {
+    position: static;
+    height: auto;
+  }
+  .a-shell:has(.practice-builder) .a-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .a-shell:has(.practice-builder) .a-main {
+    padding: 20px 16px;
+  }
+}

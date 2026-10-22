@@ -78,6 +78,7 @@ export function LearnerLayout() {
   const items = [
     { to: "/", label: t("nav.home"), end: true },
     { to: "/courses", label: t("nav.courses") },
+    { to: "/practice", label: t("practice.title") },
     { to: "/certificates", label: t("nav.certificates") },
     { to: "/faq", label: t("nav.faq") },
   ];

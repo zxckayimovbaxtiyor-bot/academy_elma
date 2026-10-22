@@ -11,6 +11,7 @@ import { TestCard } from "../../components/TestCard";
 import { date, minutes } from "../../lib/format";
 import { pick, useLang } from "../../lib/lang";
 import { useApi } from "../../lib/useApi";
+import { PracticeCatalog } from "../../practice/Practice";
 
 export function ModulePage() {
   const { t } = useTranslation();
@@ -67,7 +68,7 @@ export function ModulePage() {
             hrefFor={(lessonId) => `/courses/${m.id}/lessons/${lessonId}`}
           />
         </section>
-        <aside className="stack">{m.test && <TestCard module={m} test={m.test} />}</aside>
+        <aside className="stack"><PracticeCatalog moduleId={m.id} compact />{m.test && <TestCard module={m} test={m.test} />}</aside>
       </div>
     </div>
   );

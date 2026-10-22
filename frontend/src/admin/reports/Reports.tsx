@@ -11,6 +11,7 @@ import { dateTime } from "../../lib/format";
 import { name, pick, useLang } from "../../lib/lang";
 import { useApi } from "../../lib/useApi";
 import { PageHead } from "../ui";
+import { PracticeAnalytics } from "../../practice/Analytics";
 
 const STATES: ModuleState[] = ["certified", "in_progress", "not_started", "recert_required"];
 const num = (v: string | null) => (v ? Number(v) : undefined);
@@ -87,6 +88,7 @@ export function ReportView({ scope }: { scope: "admin" | "branch" }) {
         }
       />
 
+      <PracticeAnalytics filters={{wave_id:f.wave_id,region_id:f.region_id,module_id:f.module_id,branch_id:f.branch_id,job_role_id:f.job_role_id}} />
       {admin && (
         <div className="card card-pad filters">
           <label>

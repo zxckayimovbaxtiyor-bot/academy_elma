@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
+import { PracticeCatalog, PracticeSessionPage } from "./practice/Practice";
 
 import { RequireAuth, RequireRole } from "./auth/guards";
 import { PageLoader } from "./components/Feedback";
@@ -49,6 +50,8 @@ export function App() {
           <Route element={<LearnerLayout />}>
             <Route index element={<Home />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/practice" element={<PracticeCatalog />} />
+            <Route path="/practice/sessions/:sessionId" element={<PracticeSessionPage />} />
             <Route path="/courses/:moduleId" element={<ModulePage />} />
             <Route path="/courses/:moduleId/lessons/:lessonId" element={<Lesson />} />
             <Route path="/courses/:moduleId/test" element={<TestIntro />} />

@@ -35,6 +35,7 @@ export function AdminLayout() {
   const items = [
     { to: "/admin/reports", icon: "chart", label: t("admin.nav.reports"), show: admin },
     { to: "/admin/content", icon: "content", label: t("admin.nav.content"), show: true },
+    { to: "/admin/practice", icon: "content", label: t("practice.title"), show: true },
     { to: "/admin/questions", icon: "question", label: t("admin.nav.questions"), show: true, badge: drafts },
     { to: "/admin/waves", icon: "wave", label: t("admin.nav.waves"), show: admin },
     { to: "/admin/users", icon: "users", label: t("admin.nav.users"), show: admin },
