@@ -554,3 +554,41 @@ def test_fragment_at_the_very_end_of_a_video_is_still_watchable():
     assert remediation.span([700.0], 600.0) == (599.0, 600.0)  # stale timestamp: last second
     assert remediation.span([0], 30.0) == (0.0, 30.0)
     assert remediation.span([10, 400], 1000.0) == (0.0, 475.0)
+
+
+def test_full_rewatch_unlocks_next_attempt_without_resetting_lesson_progress(
+    db, client, reference, clock
+):
+    core, (one, v1), (two, v2), learner = _remediation_setup(db, reference)
+    core.test_cooldown_hours = 0  # the running demo's policy
+    login(client, learner)
+    attempt_id = _start(client, core.id)
+    client.post(f"{ME}/attempts/{attempt_id}/submit")
+
+    def replay(lesson, version, ranges):
+        beat = f"{ME}/lessons/{lesson.id}/heartbeat"
+        assert client.post(beat, json={"version_id": version.id, "ranges": []}).status_code == 200
+        for start, end in ranges:
+            clock.advance(seconds=30)
+            response = client.post(
+                beat, json={"version_id": version.id, "ranges": [[start, end]], "position_s": end}
+            )
+            assert response.status_code == 200, response.text
+            assert response.json()["completed"] is True  # completed before the failure too
+
+    replay(one, v1, [(85, 145), (145, 205)])
+    status = _status(client, core.id)
+    assert status["can_start"] is False
+    assert status["reasons"] == [
+        {"code": "remediation_pending", "params": {"satisfied": 1, "total": 2}}
+    ]
+    assert client.post(f"{ME}/modules/{core.id}/attempts").status_code == 409
+
+    replay(two, v2, [(265, 300)])
+    status = _status(client, core.id)
+    assert status["can_start"] is True and status["attempts_used"] == 1
+    result = client.get(f"{ME}/attempts/{attempt_id}/result").json()
+    assert result["remediation_complete"] is True and result["next_attempt_at"] is None
+    next_id = _start(client, core.id)
+    assert next_id != attempt_id
+    assert client.get(f"{ME}/attempts/{next_id}").json()["number"] == 2

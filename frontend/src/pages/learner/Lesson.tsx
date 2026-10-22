@@ -14,7 +14,7 @@ import { TestCard } from "../../components/TestCard";
 import { SEEK_TOLERANCE_S, VideoPlayer, type Cue, type PlayerHandle } from "../../components/VideoPlayer";
 import { clock, minutes } from "../../lib/format";
 import { pick, useLang } from "../../lib/lang";
-import { useApi } from "../../lib/useApi";
+import { useApi, useRefreshOnFocus } from "../../lib/useApi";
 
 interface Outline {
   lessons: LearnerLesson[];
@@ -37,6 +37,7 @@ export default function Lesson({ faq = false }: { faq?: boolean }) {
         : learner.module(moduleId).then((module) => ({ lessons: module.lessons, module })),
     [faq, moduleId],
   );
+  useRefreshOnFocus(outline.reload);
 
   if (lesson.loading && !lesson.data) return <PageLoader />;
   if (lesson.error || !lesson.data) return <ErrorState error={lesson.error} onRetry={lesson.reload} />;
@@ -98,7 +99,12 @@ function LessonView({
       if (pendingFragments.current) {
         learner
           .lesson(lessonId)
-          .then((p) => setFragments(p.remediation))
+          .then((p) => {
+            setFragments(p.remediation);
+            // Replaying an already completed lesson does not change completed.
+            // Its last pending fragment can still unlock the next test attempt.
+            if (p.remediation.every((f) => f.satisfied)) reloadOutline();
+          })
           .catch(() => undefined);
       }
     },
@@ -123,6 +129,7 @@ function LessonView({
   const doneCount = sideLessons.filter((l) => l.completed).length;
   const test = module?.test ?? null;
   const testOpen = test !== null && (test.status.can_start || test.status.open_attempt_id !== null);
+  const retakeReady = test?.status.can_start && test.status.last_passed === false;
 
   const crumbs = faq
     ? [{ label: t("nav.faq"), to: "/faq" }, { label: title }]
@@ -214,6 +221,16 @@ function LessonView({
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {retakeReady && (
+            <div className="notice notice-success row wrap" role="status">
+              <Icon name="check" />
+              <span className="grow">{t("lesson.retake_ready")}</span>
+              <Link className="btn btn-primary" to={`/courses/${player.module_id}/test`}>
+                {t("result.retake")}
+              </Link>
             </div>
           )}
 

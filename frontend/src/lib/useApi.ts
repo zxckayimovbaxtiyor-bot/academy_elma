@@ -37,6 +37,23 @@ export function useApi<T>(load: () => Promise<T>, deps: unknown[]): Loaded<T> {
   return { data, error, loading, reload, setData };
 }
 
+/** Another tab may have completed a rewatch or changed eligibility. */
+export function useRefreshOnFocus(reload: () => void) {
+  const latest = useRef(reload);
+  latest.current = reload;
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") latest.current();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+}
+
 /** Milliseconds left until `target` (ISO), ticking every second; offset corrects the clock. */
 export function useRemaining(target: string | null | undefined, offsetMs = 0): number | null {
   const [now, setNow] = useState(() => Date.now());

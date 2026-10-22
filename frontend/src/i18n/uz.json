@@ -341,6 +341,7 @@
     "done": "Dars yakunlandi. Endi videoni erkin aylantirishingiz va tezlikni oʻzgartirishingiz mumkin.",
     "rule": "Dars yakunlangan hisoblanishi uchun videoning kamida <b>90%</b>ini koʻring. Birinchi koʻrishda oldinga oʻtkazib boʻlmaydi.",
     "watched_now": "Hozircha {{pct}}% koʻrildi.",
+    "retake_ready": "Barcha kerakli fragmentlar qayta koʻrildi. Testni qayta topshirishingiz mumkin.",
     "fragments_title": "Test natijasiga koʻra qayta koʻrish kerak boʻlgan fragmentlar",
     "fragment_progress": "{{pct}}% koʻrildi",
     "fragment_go": "Fragmentga oʻtish",

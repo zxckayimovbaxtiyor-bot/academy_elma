@@ -9,7 +9,7 @@ import { ErrorState, PageLoader } from "../../components/Feedback";
 import { Icon } from "../../components/Icon";
 import { clock, countdown, dateTime, pct } from "../../lib/format";
 import { pick, useLang } from "../../lib/lang";
-import { useApi, useRemaining } from "../../lib/useApi";
+import { useApi, useRefreshOnFocus, useRemaining } from "../../lib/useApi";
 
 /** Result (mockup 4): score, attempts left, retake countdown, fragments to re-watch, history. */
 export function TestResult() {
@@ -23,6 +23,10 @@ export function TestResult() {
     [r?.module_id],
   );
   const wait = useRemaining(r?.next_attempt_at ?? null);
+  useRefreshOnFocus(() => {
+    res.reload();
+    mod.reload();
+  });
 
   if (res.error?.code === "attempt.in_progress") return <Navigate to={`/attempts/${id}`} replace />;
   if (res.loading && !r) return <PageLoader />;
@@ -35,7 +39,7 @@ export function TestResult() {
   const current = module?.test?.status.last_attempt_id === r.attempt_id;
   const open = current && !r.passed;
   const cooling = wait !== null && wait > 0;
-  const canRetake = open && r.attempts_left > 0 && r.remediation_complete && !cooling;
+  const canRetake = open && module?.test?.status.can_start === true;
   const done = r.remediation.filter((i) => i.satisfied).length;
 
   let heading: string;

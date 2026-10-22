@@ -26,7 +26,7 @@ export function TestCard({ module, test, compact }: { module: LearnerModuleDetai
   } else if (s.can_start) {
     action = (
       <Link className="btn btn-primary btn-block" to={`/courses/${module.id}/test`}>
-        {t("test.go")}
+        {t(s.last_passed === false ? "result.retake" : "test.go")}
       </Link>
     );
   }
@@ -45,6 +45,9 @@ export function TestCard({ module, test, compact }: { module: LearnerModuleDetai
           <strong>{t("test.title")}</strong>
           <span className="muted small">{line}</span>
           {action}
+          {!open && s.last_passed === false && s.last_attempt_id !== null && (
+            <Link to={`/attempts/${s.last_attempt_id}/result`}>{t("test.view_result")}</Link>
+          )}
         </div>
       </div>
     );

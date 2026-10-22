@@ -8,7 +8,7 @@ import { ErrorLine, ErrorState, PageLoader } from "../../components/Feedback";
 import { Icon } from "../../components/Icon";
 import { useReasonText } from "../../lib/reasons";
 import { pick, useLang } from "../../lib/lang";
-import { useApi } from "../../lib/useApi";
+import { useApi, useRefreshOnFocus } from "../../lib/useApi";
 
 /** Before a test: size, time, pass mark, attempts and the rules; then start. */
 export function TestIntro() {
@@ -18,6 +18,7 @@ export function TestIntro() {
   const navigate = useNavigate();
   const id = Number(useParams().moduleId);
   const { data: m, error, loading, reload } = useApi(() => learner.module(id), [id]);
+  useRefreshOnFocus(reload);
   const [busy, setBusy] = useState(false);
   const [startError, setStartError] = useState<unknown>(null);
   if (loading && !m) return <PageLoader />;
