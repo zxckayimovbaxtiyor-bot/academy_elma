@@ -93,6 +93,7 @@ export interface PResult {
   score_pct: number;
   passed: boolean;
   duration_s: number;
+  duration_estimated?: boolean;
   errors: Mistake[];
 }
 export interface PSummary {
@@ -111,6 +112,7 @@ export interface PSummary {
   }[];
 }
 export interface PSession {
+  elapsed_s: number;
   summary: SummaryItem[];
   id: number;
   scenario_id: number;
@@ -220,6 +222,18 @@ export const practice = {
   start: (id: number, mode: Mode) =>
     post<PSession>(`/me/practices/${id}/sessions`, { mode }),
   session: (id: number) => get<PSession>(`/me/practice-sessions/${id}`),
+  activity: (
+    id: number,
+    client_id: string,
+    active: boolean,
+    sequence: number,
+    keepalive = false,
+  ) =>
+    api<{ elapsed_s: number }>(`/me/practice-sessions/${id}/activity`, {
+      method: "POST",
+      json: { client_id, active, sequence },
+      keepalive,
+    }),
   history: (id: number) =>
     get<
       {

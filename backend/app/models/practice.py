@@ -101,6 +101,9 @@ class PracticeSession(Base):
     status: Mapped[str] = mapped_column(String(12), default="active")
     revision: Mapped[int] = mapped_column(Integer, default=0)
     state: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    timing: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
     policy: Mapped[dict[str, Any]] = mapped_column(JSONB)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

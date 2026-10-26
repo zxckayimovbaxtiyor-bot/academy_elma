@@ -285,6 +285,12 @@ class StartIn(Strict):
     mode: Mode = "guided"
 
 
+class ActivityIn(Strict):
+    client_id: str = Field(min_length=8, max_length=80, pattern=r"^[a-zA-Z0-9_-]+$")
+    active: bool
+    sequence: int = Field(ge=0)
+
+
 class Command(Strict):
     request_id: str = Field(min_length=8, max_length=80, pattern=r"^[a-zA-Z0-9_-]+$")
     expected_revision: int = Field(ge=0)

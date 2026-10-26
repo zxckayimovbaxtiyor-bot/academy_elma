@@ -136,7 +136,7 @@ def test_database_rejects_mutation_of_published_version(db, setup):
             )
 
 
-def test_adding_program_preserves_active_session_and_completed_result(db, setup):
+def test_adding_program_preserves_active_session_and_completed_result(db, setup, clock):
     admin, user, row = setup
     completed = practice.start(db, user, row.id, "exam")
     finish_demo(db, user, completed)
@@ -719,7 +719,7 @@ def test_practice_migration_roundtrip_on_test_database(engine):
         command.downgrade(cfg, "0001")
         command.upgrade(cfg, "head")
         assert (
-            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0003"
+            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004"
         )
 
 

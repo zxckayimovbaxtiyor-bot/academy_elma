@@ -1,5 +1,6 @@
 {
   "app": {
+    "load_failed": "Sahifani ochib boʻlmadi. Qayta yuklash uchun «Qayta urinish»ni bosing.",
     "name": "Yagona oyna Akademiyasi",
     "loading": "Yuklanmoqda…",
     "retry": "Qayta urinish",
@@ -1052,7 +1053,9 @@
     "finish": "Amaliyotni yakunlash",
     "passed": "Amaliyotdan oʻtildi",
     "failed": "Qayta urinish kerak",
-    "duration": "Bajarish vaqti: {{seconds}} soniya.",
+    "duration": "Bajarish vaqti: {{time}}",
+    "elapsed": "Vaqt: {{time}}",
+    "duration_estimated": "Bu eski urinish vaqti harakatlar tarixidan taxminan tiklandi; uzoq tanaffuslar hisobga olinmadi.",
     "result_note": "Natija serverda hisoblandi. Majburiy amaliyot uchun imtihon natijasi hisobga olinadi.",
     "errors": "Xatolar va tushuntirishlar",
     "builder": "Amaliyot · Konstruktor",

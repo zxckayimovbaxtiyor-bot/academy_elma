@@ -22,6 +22,7 @@ from app.models.practice import (
 )
 from app.schemas.practice import (
     AssignmentIn,
+    ActivityIn,
     Command,
     Definition,
     DraftIn,
@@ -32,6 +33,8 @@ from app.schemas.practice import (
     StartIn,
 )
 from app.services import audit, practice as service, practice_engine
+from app.services import practice_time
+from app import clock
 from app.services.practice_demo import demo_definition
 
 router = APIRouter(tags=["practice"])
@@ -80,6 +83,23 @@ def command(
     response = service.command(db, user, session_id, data)
     db.commit()
     return response
+
+
+@router.post("/me/practice-sessions/{session_id}/activity")
+def activity(
+    session_id: int,
+    data: ActivityIn,
+    user: AppUser = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    s = service.owned(db, user, session_id, lock=True)
+    now = clock.utcnow()
+    if s.status == "active":
+        s.timing = practice_time.activity(
+            s.timing, now, data.client_id, data.active, data.sequence
+        )
+        db.commit()
+    return {"elapsed_s": practice_time.seconds(s.timing, now)}
 
 
 @router.get("/me/practice-sessions/{session_id}/result")

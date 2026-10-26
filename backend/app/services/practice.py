@@ -23,6 +23,7 @@ from app.models.practice import (
 )
 from app.schemas.practice import AssignmentIn, Command, Definition, DraftIn, ScenarioIn
 from app.services import access, audit, practice_engine as engine
+from app.services import practice_time
 
 
 def scenario(db: Session, sid: int, lock=False) -> PracticeScenario:
@@ -278,6 +279,7 @@ def start(db, user, sid, mode):
         state=engine.initial(Definition.model_validate(v.definition)),
         policy=p,
         started_at=clock.utcnow(),
+        timing=practice_time.initial(clock.utcnow()),
     )
     if mode == "sandbox":
         s.state = engine.workspace(
@@ -326,6 +328,9 @@ def result_data(db, session_id):
             "score_pct": r.score_pct,
             "passed": r.passed,
             "duration_s": r.duration_s,
+            "duration_estimated": bool(
+                db.get(PracticeSession, session_id).timing.get("estimated")
+            ),
             "errors": r.errors,
         }
         if r
@@ -344,6 +349,7 @@ def payload(db, s):
         "revision": s.revision,
         "title": v.definition["title"],
         "started_at": s.started_at.isoformat(),
+        "elapsed_s": practice_time.seconds(s.timing, clock.utcnow()),
         "policy": s.policy,
         "records": s.state.get("records", []) if s.mode == "sandbox" else [],
         "record_id": s.state.get("record_id") if s.mode == "sandbox" else None,
@@ -385,16 +391,18 @@ def command(db, user, session_id, cmd: Command):
     s.state, errors, finished = engine.apply(definition, s.state, cmd, s.mode)
     if s.mode == "sandbox":
         engine.sync_record(s.state, definition)
+    now = clock.utcnow()
+    s.timing = practice_time.command(s.timing, now, finished=finished)
     s.revision += 1
     if finished:
-        s.status, s.finished_at = "completed", clock.utcnow()
+        s.status, s.finished_at = "completed", now
         score, passed = engine.grade(definition, s.state, s.mode, s.policy["pass_pct"])
         db.add(
             PracticeResult(
                 session_id=s.id,
                 score_pct=score,
                 passed=passed,
-                duration_s=max(0, int((s.finished_at - s.started_at).total_seconds())),
+                duration_s=practice_time.seconds(s.timing, now),
                 errors=s.state["mistakes"],
             )
         )

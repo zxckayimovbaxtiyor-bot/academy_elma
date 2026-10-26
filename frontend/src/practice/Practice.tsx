@@ -14,8 +14,9 @@ import { ProgressBar } from "../components/Status";
 import { Icon } from "../components/Icon";
 import { useLang } from "../lib/lang";
 import { useApi } from "../lib/useApi";
-import { dateTime } from "../lib/format";
+import { clock, dateTime } from "../lib/format";
 import { ScenarioScreen } from "./Renderer";
+import { usePracticeTimer } from "./usePracticeTimer";
 
 export function PracticeCatalog({
   moduleId,
@@ -120,6 +121,11 @@ export function PracticeSessionPage() {
   const lang = useLang();
   const loaded = useApi(() => practice.session(id), [id]);
   const s = loaded.data;
+  const elapsed = usePracticeTimer(
+    id,
+    s?.status === "active",
+    s?.elapsed_s ?? 0,
+  );
   const [values, setValues] = useState<Record<string, Value>>({});
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -220,15 +226,22 @@ export function PracticeSessionPage() {
             {t("practice.version", { number: s.version })}
           </p>
         </div>
-        <span role="status" className="muted">
-          {t(
-            busy
-              ? "practice.saving"
-              : dirty
-                ? "practice.unsaved"
-                : "practice.saved",
+        <div className="stack-sm">
+          {s.status === "active" && (
+            <span className="num">
+              {t("practice.elapsed", { time: clock(elapsed) })}
+            </span>
           )}
-        </span>
+          <span role="status" className="muted">
+            {t(
+              busy
+                ? "practice.saving"
+                : dirty
+                  ? "practice.unsaved"
+                  : "practice.saved",
+            )}
+          </span>
+        </div>
       </header>
       <ErrorLine error={failure} />
       {pending.current && Boolean(failure) && (
@@ -449,7 +462,10 @@ function Result({ s }: { s: PSession }) {
     <article className="card card-pad stack">
       <h2>{t(r.passed ? "practice.passed" : "practice.failed")}</h2>
       <div className="practice-score">{r.score_pct}%</div>
-      <p>{t("practice.duration", { seconds: r.duration_s })}</p>
+      <p>{t("practice.duration", { time: clock(r.duration_s) })}</p>
+      {r.duration_estimated && (
+        <p className="small muted">{t("practice.duration_estimated")}</p>
+      )}
       <p className="muted">{t("practice.result_note")}</p>
       {r.errors.length > 0 && (
         <>
