@@ -671,6 +671,12 @@ a.lesson-row:hover {
 .lesson-head h1 {
   font-size: 30px;
 }
+.lesson-head > div {
+  min-width: 0;
+}
+.lesson-head .chip {
+  white-space: normal;
+}
 .fragment-row {
   display: flex;
   align-items: center;
@@ -725,7 +731,7 @@ a.lesson-row:hover {
 .player-big {
   position: absolute;
   left: 50%;
-  top: calc(50% - 44px);
+  top: 50%;
   transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
@@ -744,7 +750,7 @@ a.lesson-row:hover {
 }
 .player-overlay {
   position: absolute;
-  inset: 0 0 96px;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -755,7 +761,7 @@ a.lesson-row:hover {
 .player-caption {
   position: absolute;
   left: 50%;
-  bottom: 118px;
+  bottom: 20px;
   transform: translateX(-50%);
   max-width: 80%;
   padding: 10px 20px;
@@ -777,7 +783,9 @@ a.lesson-row:hover {
   border-radius: var(--radius-pill);
   background: rgba(0, 0, 0, 0.85);
   font-size: 15px;
-  white-space: nowrap;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  text-align: center;
 }
 .player-bar {
   padding: 12px 20px;
@@ -862,6 +870,7 @@ a.lesson-row:hover {
 }
 .player-controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 6px;
@@ -1575,6 +1584,11 @@ a.lesson-row:hover {
 @media (max-width: 600px) {
   .container { padding-left: 16px; padding-right: 16px; }
   .container.page { padding: 20px 16px 40px; }
+  .player-controls > .grow { display: none; }
+  .player-controls { justify-content: center; }
+  .player-caption { font-size: 14px; padding: 6px 10px; bottom: 12px; }
+  .player-big { width: 72px; height: 72px; }
+  .fragment-row { flex-wrap: wrap; }
 }
 
 @media (max-width: 1480px) {

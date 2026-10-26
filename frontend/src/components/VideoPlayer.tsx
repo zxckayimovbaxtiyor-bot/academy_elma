@@ -435,32 +435,33 @@ export const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
           )}
         </video>
         <canvas ref={frame} className="player-held-frame" hidden aria-hidden="true" />
-      </div>
 
-      {failed ? (
-        <div className="player-overlay">
-          <p>{t("player.failed")}</p>
-          <button className="btn" onClick={() => setRetry((n) => n + 1)}>
-            {t("app.retry")}
-          </button>
-        </div>
-      ) : waiting && playing ? (
-        <div className="player-overlay" role="status">
-          <div className="spinner" />
-        </div>
-      ) : (
-        !playing && (
-          <button className="player-big" onClick={toggle} aria-label={t("player.play")}>
-            <Icon name="play" size={40} />
-          </button>
-        )
-      )}
-      {sub && caption && <div className="player-caption">{caption}</div>}
-      {toast && (
-        <div className="player-toast" role="status">
-          {toast}
-        </div>
-      )}
+        {failed ? (
+          <div className="player-overlay">
+            <p>{t("player.failed")}</p>
+            <button className="btn" onClick={() => setRetry((n) => n + 1)}>
+              {t("app.retry")}
+            </button>
+          </div>
+        ) : waiting && playing ? (
+          <div className="player-overlay" role="status">
+            <div className="spinner" />
+          </div>
+        ) : (
+          !playing && (
+            <button className="player-big" onClick={toggle} aria-label={t("player.play")}>
+              <Icon name="play" size={40} />
+            </button>
+          )
+        )}
+        {sub && caption && <div className="player-caption">{caption}</div>}
+        {toast && (
+          <div className="player-toast" role="status">
+            {toast}
+          </div>
+        )}
+
+      </div>
 
       <div className="player-bar">
         <div className="seek">
