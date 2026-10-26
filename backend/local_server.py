@@ -44,4 +44,4 @@ def frontend(path: str):
         raise HTTPException(404)
     if path == "favicon.svg":
         return FileResponse(dist / "favicon.svg")
-    return FileResponse(dist / "index.html")
+    return FileResponse(dist / "index.html", headers={"Cache-Control": "no-store"})

@@ -1438,6 +1438,8 @@
     "value_type": "Qiymat turi",
     "seconds": "soniya",
     "add_row": "Satr qoʻshish",
-    "delete_column": "Ustunni oʻchirish"
+    "delete_column": "Ustunni oʻchirish",
+    "component_added": "«{{name}}» komponenti qoʻshildi. Xususiyatlari oʻng tomonda ochildi.",
+    "component_limit": "Bitta ekranga eng koʻpi 50 ta komponent joylashtirish mumkin."
   }
 }

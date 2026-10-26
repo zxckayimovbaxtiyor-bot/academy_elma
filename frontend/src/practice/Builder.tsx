@@ -90,6 +90,21 @@ export function PracticeBuilder() {
   const [reviewed, setReviewed] = useState(false);
   const [previewI18n] = useState(() => i18n.cloneInstance({ lng: lang }));
   const dialog = useRef<HTMLDialogElement>(null);
+  const selectedComponent = useRef<HTMLDivElement>(null);
+  const pendingAddedComponent = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      pendingAddedComponent.current !== componentId ||
+      !selectedComponent.current
+    )
+      return;
+    selectedComponent.current.scrollIntoView({
+      block: "nearest",
+      behavior: "auto",
+    });
+    selectedComponent.current.focus({ preventScroll: true });
+    pendingAddedComponent.current = null;
+  }, [componentId]);
   const savingRef = useRef<Promise<Scenario | null> | null>(null);
   const current = useRef({ def, selected, moduleId, lessonId, policy, dirty });
   current.current = { def, selected, moduleId, lessonId, policy, dirty };
@@ -354,6 +369,10 @@ export function PracticeBuilder() {
     : [];
   const add = (type: ComponentType, index?: number) => {
     if (!screen) return;
+    if (screen.components.length >= 50) {
+      setNotice(t("studio.component_limit"));
+      return;
+    }
     const c = component(
       type,
       lt(
@@ -364,8 +383,10 @@ export function PracticeBuilder() {
     const items = [...screen.components];
     items.splice(index ?? items.length, 0, c);
     patchScreen({ ...screen, components: items });
+    pendingAddedComponent.current = c.id;
     setComponentId(c.id);
     setInspector("properties");
+    setNotice(t("studio.component_added", { name: c.label[lang] }));
   };
   const duplicateScreen = () => {
     if (!def || !screen) return;
@@ -992,6 +1013,9 @@ export function PracticeBuilder() {
                       {screen.components.map((c, i) => (
                         <div
                           key={c.id}
+                          ref={
+                            c.id === componentId ? selectedComponent : undefined
+                          }
                           className={`studio-component ${chosen?.id === c.id ? "selected" : ""}`}
                           style={{
                             gridColumn:
