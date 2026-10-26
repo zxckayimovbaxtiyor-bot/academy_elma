@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { practice } from "../api/practice";
 import { ErrorState, PageLoader } from "../components/Feedback";
 import { useApi } from "../lib/useApi";
+import { SessionReport } from "./SessionReport";
 import { useLang } from "../lib/lang";
 import "../styles/practice.css";
 
@@ -14,6 +15,7 @@ export function PracticeAnalytics({
   const { t } = useTranslation();
   const lang = useLang();
   const [page, setPage] = useState(1);
+  const [reportId, setReportId] = useState<number | null>(null);
   useEffect(() => setPage(1), [JSON.stringify(filters)]);
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState("exam");
@@ -79,6 +81,9 @@ export function PracticeAnalytics({
           </div>
         ))}
       </div>
+      {reportId !== null && (
+        <SessionReport id={reportId} close={() => setReportId(null)} />
+      )}
       {expanded && (
         <>
           <div className="practice-editor-grid">
@@ -154,6 +159,13 @@ export function PracticeAnalytics({
                       {s.full_name}
                       <br />
                       <small>{s.employee_id}</small>
+                      <br />
+                      <button
+                        className="back-link"
+                        onClick={() => setReportId(s.id)}
+                      >
+                        {t("practice.details")}
+                      </button>
                     </td>
                     <td>{t(`practice.mode.${s.mode}`)}</td>
                     <td>

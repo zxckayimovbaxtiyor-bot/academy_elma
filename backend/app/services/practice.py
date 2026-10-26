@@ -70,14 +70,31 @@ def validate_assets(db, sid, definition):
         for c in s.components
         if c.asset_id is not None
     }
-    owned = set(
-        db.scalars(
-            select(PracticeAsset.id).where(
+    if definition.metadata.cover_asset_id:
+        ids.add(definition.metadata.cover_asset_id)
+    assets = {
+        row.id: row
+        for row in db.scalars(
+            select(PracticeAsset).where(
                 PracticeAsset.scenario_id == sid, PracticeAsset.id.in_(ids or [0])
             )
         )
-    )
-    if ids != owned:
+    }
+    if ids != assets.keys():
+        raise AppError(422, "practice.invalid_asset")
+    for screen in definition.screens:
+        for c in screen.components:
+            if c.asset_id and (
+                (c.type == "video" and assets[c.asset_id].content_type != "video/mp4")
+                or (
+                    c.type == "image" and assets[c.asset_id].content_type != "image/png"
+                )
+            ):
+                raise AppError(422, "practice.invalid_asset")
+    if (
+        definition.metadata.cover_asset_id
+        and assets[definition.metadata.cover_asset_id].content_type != "image/png"
+    ):
         raise AppError(422, "practice.invalid_asset")
 
 
@@ -165,6 +182,7 @@ def detail(db, row):
     live = version(db, row.id)
     return {
         "id": row.id,
+        "archived": row.archived_at is not None,
         "module_id": row.module_id,
         "lesson_id": row.lesson_id,
         "version_id": v.id,
@@ -180,6 +198,8 @@ def detail(db, row):
 def catalog(db, user, module_id=None, lesson_id=None):
     out = []
     for row in db.scalars(select(PracticeScenario).order_by(PracticeScenario.id)):
+        if row.archived_at:
+            continue
         if module_id and row.module_id != module_id:
             continue
         if lesson_id and row.lesson_id != lesson_id:
@@ -208,6 +228,7 @@ def catalog(db, user, module_id=None, lesson_id=None):
                 "lesson_id": row.lesson_id,
                 "title": v.definition["title"],
                 "description": v.definition["description"],
+                "metadata": v.definition.get("metadata", {}),
                 "number": v.number,
                 "policy": policy(db, row.id),
                 "sessions": [
@@ -242,6 +263,8 @@ def start(db, user, sid, mode):
     )
     if active:
         return active
+    if row.archived_at:
+        raise not_found("practice")
     p = policy(db, sid)
     module = db.get(Module, row.module_id)
     if p["theory_first"]:
@@ -276,7 +299,15 @@ def start(db, user, sid, mode):
         version_id=v.id,
         release_id=module.current_release_id,
         mode=mode,
-        state=engine.initial(Definition.model_validate(v.definition)),
+        state=engine.initial(
+            Definition.model_validate(v.definition),
+            task_id=(
+                random.SystemRandom().choice(v.definition["tasks"])["id"]
+                if mode == "exam" and v.definition.get("tasks")
+                else None
+            ),
+            mode=mode,
+        ),
         policy=p,
         started_at=clock.utcnow(),
         timing=practice_time.initial(clock.utcnow()),
@@ -289,8 +320,6 @@ def start(db, user, sid, mode):
                 request_id="initial-record", expected_revision=0, kind="new_record"
             ),
         )
-    elif mode == "exam" and v.definition.get("tasks"):
-        s.state["task_id"] = random.SystemRandom().choice(v.definition["tasks"])["id"]
     db.add(s)
     db.flush()
     audit.record(
@@ -328,6 +357,7 @@ def result_data(db, session_id):
             "score_pct": r.score_pct,
             "passed": r.passed,
             "duration_s": r.duration_s,
+            "expired": bool(db.get(PracticeSession, session_id).state.get("expired")),
             "duration_estimated": bool(
                 db.get(PracticeSession, session_id).timing.get("estimated")
             ),
@@ -340,6 +370,25 @@ def result_data(db, session_id):
 
 def payload(db, s):
     v = db.get(PracticeScenarioVersion, s.version_id)
+    public = engine.public_state(
+        Definition.model_validate(v.definition),
+        s.state,
+        s.mode,
+        complete=s.status == "completed",
+    )
+    from app.models.practice import PracticeUpload
+
+    uploads = {
+        f"upload_{r.id}": r.filename
+        for r in db.scalars(
+            select(PracticeUpload).where(PracticeUpload.session_id == s.id)
+        )
+    }
+    for component in public["screen"]["components"]:
+        if component["type"] == "file":
+            component["upload_name"] = uploads.get(
+                s.state["values"].get(component["id"]), ""
+            )
     return {
         "id": s.id,
         "scenario_id": s.scenario_id,
@@ -353,12 +402,7 @@ def payload(db, s):
         "policy": s.policy,
         "records": s.state.get("records", []) if s.mode == "sandbox" else [],
         "record_id": s.state.get("record_id") if s.mode == "sandbox" else None,
-        **engine.public_state(
-            Definition.model_validate(v.definition),
-            s.state,
-            s.mode,
-            complete=s.status == "completed",
-        ),
+        **public,
         "result": result_data(db, s.id),
     }
 
@@ -387,8 +431,39 @@ def command(db, user, session_id, cmd: Command):
     definition = Definition.model_validate(
         db.get(PracticeScenarioVersion, s.version_id).definition
     )
+    from app.models.practice import PracticeUpload
+
+    file_fields = {
+        c.id
+        for screen in definition.screens
+        if screen.id == s.state["screen"]
+        for c in screen.components
+        if c.type == "file"
+    }
+    for key, value in cmd.values.items():
+        if key in file_fields and value is not None:
+            try:
+                upload_id = (
+                    int(str(value).removeprefix("upload_"))
+                    if str(value).startswith("upload_")
+                    else 0
+                )
+            except ValueError:
+                upload_id = 0
+            upload = db.get(PracticeUpload, upload_id)
+            if not upload or upload.session_id != s.id or upload.component_id != key:
+                raise AppError(422, "practice.invalid_values")
     old_screen = s.state["screen"]
-    s.state, errors, finished = engine.apply(definition, s.state, cmd, s.mode)
+    expired = (
+        definition.metadata.time_limit_s is not None
+        and practice_time.seconds(s.timing, clock.utcnow())
+        >= definition.metadata.time_limit_s
+    )
+    if expired:
+        s.state = {**s.state, "screen": definition.completion[0], "expired": True}
+        errors, finished = [], True
+    else:
+        s.state, errors, finished = engine.apply(definition, s.state, cmd, s.mode)
     if s.mode == "sandbox":
         engine.sync_record(s.state, definition)
     now = clock.utcnow()
@@ -427,6 +502,7 @@ def command(db, user, session_id, cmd: Command):
             screen_id=old_screen,
             kind=cmd.kind,
             errors=errors,
+            details={"action": cmd.action, "event": cmd.event, "values": cmd.values},
             response=response,
         )
     )
@@ -443,7 +519,7 @@ def requirements_met(db, user_id, module_id, gate):
         select(PracticeScenario).where(PracticeScenario.module_id == module_id)
     ):
         p = policy(db, row.id)
-        if not p["required"] or p["gate"] != gate:
+        if row.archived_at or not p["required"] or p["gate"] != gate:
             continue
         v = version(db, row.id)
         if v is None:
@@ -515,6 +591,11 @@ def analytics(
             PracticeSession.scenario_id,
             PracticeSession.mode,
             PracticeSession.status,
+            PracticeSession.version_id,
+            PracticeSession.started_at,
+            PracticeSession.finished_at,
+            PracticeSession.state["task_id"].astext.label("task_id"),
+            PracticeSession.state["hints_used"].label("hints_used"),
             PracticeSession.state["mistakes"].label("mistakes"),
             AppUser.employee_id,
             AppUser.full_name,
@@ -592,6 +673,11 @@ def analytics(
                         "scenario_id",
                         "mode",
                         "status",
+                        "version_id",
+                        "task_id",
+                        "started_at",
+                        "finished_at",
+                        "hints_used",
                         "score_pct",
                         "passed",
                         "duration_s",

@@ -13,6 +13,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
     text,
 )
@@ -33,6 +34,7 @@ class PracticeScenario(Base):
     )
     created_by: Mapped[int] = mapped_column(BigInteger, ForeignKey("app_user.id"))
     created_at: Mapped[CreatedAt]
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class PracticeScenarioVersion(Base):
@@ -121,6 +123,9 @@ class PracticeAction(Base):
     screen_id: Mapped[str] = mapped_column(String(64))
     kind: Mapped[str] = mapped_column(String(32))
     errors: Mapped[list] = mapped_column(JSONB)
+    details: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
     response: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[CreatedAt]
 
@@ -144,6 +149,20 @@ class PracticeAsset(Base):
     scenario_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("practice_scenario.id"), index=True
     )
-    data: Mapped[str] = mapped_column()  # re-encoded PNG as base64; max 2 MB source
+    data: Mapped[str] = mapped_column()  # sanitized, size-bounded media
+    content_type: Mapped[str] = mapped_column(String(40), server_default="image/png")
     created_by: Mapped[int] = mapped_column(BigInteger, ForeignKey("app_user.id"))
+    created_at: Mapped[CreatedAt]
+
+
+class PracticeUpload(Base):
+    __tablename__ = "practice_upload"
+    id: Mapped[IdPk]
+    session_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("practice_session.id"), index=True
+    )
+    component_id: Mapped[str] = mapped_column(String(64))
+    filename: Mapped[str] = mapped_column(String(200))
+    content_type: Mapped[str] = mapped_column(String(40))
+    data: Mapped[str] = mapped_column(Text)
     created_at: Mapped[CreatedAt]

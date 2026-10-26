@@ -399,3 +399,43 @@
 .practice-result-scroll > details {
   margin-top: 12px;
 }
+.practice-screen-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.practice-screen-grid > div {
+  min-width: 0;
+}
+.practice-card {
+  padding: 20px;
+  background: #f5f8fb;
+  border: 1px solid #e7edf1;
+  border-radius: 9px;
+}
+.practice-card h3 {
+  margin-top: 0;
+}
+.practice-card dl {
+  margin-bottom: 0;
+}
+.practice-video {
+  width: 100%;
+  max-height: 440px;
+  border-radius: 9px;
+  background: #102c35;
+}
+.practice-cover {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+@media (max-width: 700px) {
+  .practice-screen-grid {
+    grid-template-columns: 1fr;
+  }
+  .practice-screen-grid > div {
+    grid-column: 1/-1 !important;
+  }
+}

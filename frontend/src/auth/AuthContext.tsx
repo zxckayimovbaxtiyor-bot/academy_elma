@@ -1,5 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
+import { clearOtherPracticeDrafts } from "../practice/draftStorage";
 import { AUTH_LOST } from "../api/client";
 import { auth } from "../api/learner";
 import type { Lang, Me } from "../api/types";
@@ -21,6 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   const adopt = useCallback((user: Me | null) => {
+    try {
+      clearOtherPracticeDrafts(sessionStorage, user?.id);
+      clearOtherPracticeDrafts(localStorage);
+    } catch {}
     setMe(user);
     if (user && user.preferred_language !== i18n.language) {
       void i18n.changeLanguage(user.preferred_language);
@@ -53,6 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signedIn: adopt,
       logout: async () => {
         await auth.logout().catch(() => undefined);
+        try {
+          clearOtherPracticeDrafts(sessionStorage);
+          clearOtherPracticeDrafts(localStorage);
+        } catch {}
         setMe(null);
       },
       setLanguage: (lang) => {

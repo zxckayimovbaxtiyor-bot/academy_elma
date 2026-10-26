@@ -15,6 +15,7 @@ import { Icon } from "../components/Icon";
 import { useLang } from "../lib/lang";
 import { useApi } from "../lib/useApi";
 import { clock, dateTime } from "../lib/format";
+import { editableValues } from "./studioModel";
 import { ScenarioScreen } from "./Renderer";
 import { usePracticeTimer } from "./usePracticeTimer";
 
@@ -63,6 +64,13 @@ export function PracticeCatalog({
       )}
       {data.map((s) => (
         <article key={s.id} className="card card-pad stack">
+          {s.metadata?.cover_asset_id && (
+            <img
+              className="practice-cover"
+              src={`/api/v1/practice-assets/${s.metadata.cover_asset_id}?cover=true`}
+              alt={s.title[lang]}
+            />
+          )}
           <div className="spread">
             <h2>{s.title[lang]}</h2>
             <span className="chip">
@@ -80,7 +88,11 @@ export function PracticeCatalog({
           <div className="row practice-wrap">
             {(["guided", "sandbox", "exam"] as Mode[]).map((mode) => (
               <button
-                className={mode === "guided" ? "btn btn-primary" : "btn"}
+                className={
+                  mode === (s.metadata?.default_mode ?? "guided")
+                    ? "btn btn-primary"
+                    : "btn"
+                }
                 key={mode}
                 disabled={busy}
                 onClick={() => launch(s.id, mode)}
@@ -143,6 +155,8 @@ export function PracticeSessionPage() {
     action?: string,
     retry = false,
     target?: string,
+    event?: Command["event"],
+    changedValues?: Record<string, Value>,
   ) => {
     if (!s || inFlight.current) return;
     const cmd = retry
@@ -153,23 +167,9 @@ export function PracticeSessionPage() {
           kind,
           action,
           target,
-          values: ["action", "save", "finish"].includes(kind)
-            ? Object.fromEntries(
-                Object.entries(values).filter(([key]) =>
-                  s.screen.components.some(
-                    (c) =>
-                      c.id === key &&
-                      [
-                        "text",
-                        "number",
-                        "select",
-                        "checkbox",
-                        "document",
-                        "tabs",
-                      ].includes(c.type),
-                  ),
-                ),
-              )
+          event,
+          values: ["action", "save", "finish", "event", "hint"].includes(kind)
+            ? editableValues(s.screen, changedValues ?? values)
             : {},
         };
     if (!cmd) return;
@@ -206,6 +206,16 @@ export function PracticeSessionPage() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
+  useEffect(() => {
+    if (
+      s?.status === "active" &&
+      s.time_limit_s &&
+      elapsed >= s.time_limit_s &&
+      !busy &&
+      !pending.current
+    )
+      void send("finish");
+  }, [s, elapsed, busy]);
   if (loaded.loading && !s) return <PageLoader />;
   if (loaded.error || !s)
     return <ErrorState error={loaded.error} onRetry={loaded.reload} />;
@@ -227,6 +237,13 @@ export function PracticeSessionPage() {
           </p>
         </div>
         <div className="stack-sm">
+          {s.status === "active" && s.time_limit_s && (
+            <span className="num">
+              {t("studio.time_left", {
+                time: clock(Math.max(0, s.time_limit_s - elapsed)),
+              })}
+            </span>
+          )}
           {s.status === "active" && (
             <span className="num">
               {t("practice.elapsed", { time: clock(elapsed) })}
@@ -462,6 +479,9 @@ function Result({ s }: { s: PSession }) {
     <article className="card card-pad stack">
       <h2>{t(r.passed ? "practice.passed" : "practice.failed")}</h2>
       <div className="practice-score">{r.score_pct}%</div>
+      {r.expired && (
+        <p className="notice notice-danger">{t("studio.time_expired")}</p>
+      )}
       <p>{t("practice.duration", { time: clock(r.duration_s) })}</p>
       {r.duration_estimated && (
         <p className="small muted">{t("practice.duration_estimated")}</p>

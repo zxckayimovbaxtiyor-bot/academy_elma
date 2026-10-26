@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   ComponentType,
@@ -10,11 +10,13 @@ import type {
   SummaryItem,
 } from "../api/practice";
 import { useLang } from "../lib/lang";
+import { practice } from "../api/practice";
+import { ErrorLine } from "../components/Feedback";
 import { NumberInput } from "./NumberInput";
 import { numberText } from "../lib/numberInput";
 import "../styles/practice.css";
 
-type Props = {
+export type ComponentProps = {
   summary?: SummaryItem[];
   component: PComponent;
   value: Value;
@@ -25,7 +27,10 @@ type Props = {
   disabled: boolean;
   guided: boolean;
   invalid: boolean;
+  onHint?: (id: string) => void;
+  elapsed?: number;
 };
+type Props = ComponentProps;
 type Renderer = (p: Props) => ReactNode;
 // Extend this registry together with the validated server schema, preserving existing types.
 const registry: Partial<Record<ComponentType, Renderer>> = {};
@@ -62,21 +67,26 @@ function Standard(p: Props) {
   const { component: c, value, change, action, disabled, guided, invalid } = p;
   const lang = useLang();
   const { t } = useTranslation();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<unknown>(null);
   const label = c.label[lang];
-  const id = `practice-${c.id}`;
+  const instanceId = useId();
+  const id = `practice-${c.id}-${instanceId}`;
   const input = {
     id,
-    disabled,
+    disabled: disabled || c.editable === false,
+    placeholder: c.placeholder?.[lang],
     "aria-invalid": invalid,
     "aria-describedby": c.hint && guided ? `${id}-hint` : undefined,
   };
   let node: ReactNode;
   switch (c.type) {
+    case "date":
     case "text":
       node = (
         <input
           {...input}
-          type="text"
+          type={c.type === "date" ? "date" : "text"}
           value={value === null ? "" : String(value)}
           maxLength={2000}
           onChange={(e) => change(e.target.value)}
@@ -86,6 +96,7 @@ function Standard(p: Props) {
     case "number":
       node = <NumberInput {...input} value={value} change={change} />;
       break;
+    case "switch":
     case "checkbox":
       node = (
         <input
@@ -96,6 +107,7 @@ function Standard(p: Props) {
         />
       );
       break;
+    case "dialog":
     case "select":
     case "document":
       node = (
@@ -132,7 +144,7 @@ function Standard(p: Props) {
               type="button"
               className={`btn ${value === o.value ? "btn-primary" : ""}`}
               key={o.value}
-              disabled={disabled}
+              disabled={disabled || c.editable === false}
               aria-pressed={value === o.value}
               onClick={() => change(o.value)}
             >
@@ -148,16 +160,23 @@ function Standard(p: Props) {
         <button
           type="button"
           className={`btn btn-primary ${guided ? "practice-highlight" : ""}`}
-          disabled={disabled}
+          disabled={disabled || c.editable === false}
           title={guided ? c.hint?.[lang] : undefined}
           onClick={() => action(c.id)}
         >
           {label}
         </button>
       );
+    case "products":
+    case "operations":
     case "table":
     case "client": {
-      const columns = [...new Set(c.rows.flatMap((r) => Object.keys(r)))];
+      const columns = [
+        ...new Set([
+          ...(c.columns ?? []).map((col) => col.value),
+          ...c.rows.flatMap((row) => Object.keys(row)),
+        ]),
+      ];
       node = (
         <div className="practice-table">
           <table>
@@ -165,7 +184,8 @@ function Standard(p: Props) {
               <tr>
                 {columns.map((col) => (
                   <th key={col}>
-                    {t(`practice.column.${col}`, { defaultValue: col })}
+                    {c.columns?.find((x) => x.value === col)?.label[lang] ??
+                      t(`practice.column.${col}`, { defaultValue: col })}
                   </th>
                 ))}
               </tr>
@@ -186,6 +206,8 @@ function Standard(p: Props) {
       );
       break;
     }
+    case "result":
+    case "check_status":
     case "status":
       node = (
         <dl className="practice-summary">
@@ -213,6 +235,104 @@ function Standard(p: Props) {
         </dl>
       );
       break;
+    case "heading":
+      return <h3>{label}</h3>;
+    case "paragraph":
+      return <p style={{ whiteSpace: "pre-wrap" }}>{label}</p>;
+    case "timer":
+      return (
+        <div className="notice">
+          <strong>{label}</strong> · {Math.floor((p.elapsed ?? 0) / 60)}:
+          {String((p.elapsed ?? 0) % 60).padStart(2, "0")}
+        </div>
+      );
+    case "file":
+      node = (
+        <>
+          <input
+            {...input}
+            disabled={input.disabled || uploading}
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f) {
+                change(null);
+                return;
+              }
+              if (!p.sessionId) {
+                change(f.name.slice(0, 200));
+                return;
+              }
+              setUploading(true);
+              setUploadError(null);
+              try {
+                const result = await practice.uploadFile(p.sessionId, c.id, f);
+                change(result.value);
+              } catch (error) {
+                setUploadError(error);
+              } finally {
+                setUploading(false);
+              }
+            }}
+          />
+          {uploading && <small role="status">{t("practice.saving")}</small>}
+          <ErrorLine error={uploadError} />
+          {value &&
+            (p.sessionId && String(value).startsWith("upload_") ? (
+              <a
+                href={`/api/v1/me/practice-sessions/${p.sessionId}/files/${String(value).slice(7)}`}
+                download
+              >
+                {c.upload_name ?? t("practice.component.file")}
+              </a>
+            ) : (
+              <span className="chip">{String(value)}</span>
+            ))}
+          <small className="muted">
+            {t(
+              p.sessionId ? "studio.file_notice" : "studio.file_preview_notice",
+            )}
+          </small>
+        </>
+      );
+      break;
+    case "card":
+    case "passport":
+    case "loan":
+      return (
+        <article className="practice-card">
+          <h3>{label}</h3>
+          <span className="chip">{t("practice.synthetic")}</span>
+          <dl className="practice-summary">
+            {c.rows.flatMap((r, i) =>
+              Object.entries(r).map(([key, v]) => (
+                <div key={`${i}-${key}`}>
+                  <dt>
+                    {c.columns?.find((col) => col.value === key)?.label[lang] ??
+                      key}
+                  </dt>
+                  <dd>{v}</dd>
+                </div>
+              )),
+            )}
+          </dl>
+        </article>
+      );
+    case "video":
+      return c.asset_id ? (
+        <figure>
+          <video
+            className="practice-video"
+            controls
+            preload="metadata"
+            src={`/api/v1/practice-assets/${c.asset_id}${p.sessionId ? `?session_id=${p.sessionId}` : ""}`}
+          />
+          <figcaption>{label}</figcaption>
+        </figure>
+      ) : (
+        <div className="notice">{label}</div>
+      );
     case "modal":
       return <Modal label={label} />;
     case "image":
@@ -226,7 +346,7 @@ function Standard(p: Props) {
             <button
               type="button"
               key={i}
-              disabled={disabled}
+              disabled={disabled || c.editable === false}
               aria-label={h.label[lang]}
               title={h.label[lang]}
               className="practice-hotspot"
@@ -245,7 +365,9 @@ function Standard(p: Props) {
         </figure>
       );
     case "hint":
-      return guided ? <aside className="notice">{label}</aside> : null;
+      return guided ? (
+        <Hint label={label} show={() => p.onHint?.(c.id)} />
+      ) : null;
     default:
       return (
         <div className="notice">
@@ -261,14 +383,40 @@ function Standard(p: Props) {
       </label>
       {node}
       {guided && c.hint && (
-        <small id={`${id}-hint`} className="muted">
-          {c.hint[lang]}
-        </small>
+        <Hint
+          id={`${id}-hint`}
+          label={c.hint[lang]}
+          show={() => p.onHint?.(c.id)}
+        />
       )}
     </div>
   );
 }
 
+export const PracticeComponentView = Standard;
+function Hint({
+  label,
+  show,
+  id,
+}: {
+  label: string;
+  show: () => void;
+  id?: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <details
+      id={id}
+      className="notice"
+      onToggle={(e) => {
+        if (e.currentTarget.open) show();
+      }}
+    >
+      <summary>{t("studio.show_hint")}</summary>
+      <p>{label}</p>
+    </details>
+  );
+}
 export function ScenarioScreen({
   summary,
   screen,
@@ -279,6 +427,9 @@ export function ScenarioScreen({
   guided = true,
   feedback = [],
   sessionId,
+  onEvent,
+  onHint,
+  elapsed,
 }: {
   summary?: SummaryItem[];
   screen: PScreen;
@@ -289,6 +440,13 @@ export function ScenarioScreen({
   guided?: boolean;
   feedback?: Mistake[];
   sessionId?: number;
+  onEvent?: (
+    id: string,
+    event: "change" | "submit" | "click",
+    values: Record<string, Value>,
+  ) => void;
+  onHint?: (id: string) => void;
+  elapsed?: number;
 }) {
   const lang = useLang();
   const { t } = useTranslation();
@@ -330,7 +488,14 @@ export function ScenarioScreen({
           </ul>
         </div>
       )}
-      <form className="stack" onSubmit={(e) => e.preventDefault()}>
+      <form
+        className="practice-screen-grid"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const button = screen.components.find((c) => c.type === "button");
+          if (button) onEvent?.(button.id, "submit", values);
+        }}
+      >
         {screen.components.map((c) => {
           const props: Props = {
             summary,
@@ -340,12 +505,26 @@ export function ScenarioScreen({
             change: (v) => setValues({ ...values, [c.id]: v }),
             action: onAction,
             sessionId,
+            onHint,
+            elapsed,
             disabled,
             guided,
             invalid: feedback.some((e) => e.field === c.id),
           };
           return (
-            <div key={c.id}>
+            <div
+              key={c.id}
+              style={{ gridColumn: c.width === "half" ? "span 1" : "1 / -1" }}
+              onBlur={(e) => {
+                if ((e.relatedTarget as HTMLElement | null)?.closest("button"))
+                  return;
+                if (
+                  !e.currentTarget.contains(e.relatedTarget) &&
+                  c.event_types?.includes("change")
+                )
+                  onEvent?.(c.id, "change", values);
+              }}
+            >
               {registry[c.type] ? (
                 registry[c.type]!(props)
               ) : (

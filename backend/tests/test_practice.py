@@ -719,7 +719,7 @@ def test_practice_migration_roundtrip_on_test_database(engine):
         command.downgrade(cfg, "0001")
         command.upgrade(cfg, "head")
         assert (
-            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004"
+            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0005"
         )
 
 
