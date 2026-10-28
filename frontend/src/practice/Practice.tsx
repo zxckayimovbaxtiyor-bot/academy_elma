@@ -86,7 +86,7 @@ export function PracticeCatalog({
             {s.policy.required && ` · ${t("practice.required")}`}
           </p>
           <div className="row practice-wrap">
-            {(["guided", "sandbox", "exam"] as Mode[]).map((mode) => (
+            {(["guided", "exam"] as Mode[]).map((mode) => (
               <button
                 className={
                   mode === (s.metadata?.default_mode ?? "guided")
@@ -112,7 +112,9 @@ export function PracticeCatalog({
                       {t(
                         a.status === "active"
                           ? "practice.resume"
-                          : "practice.completed",
+                          : a.status === "abandoned"
+                            ? "practice.abandoned"
+                            : "practice.completed",
                       )}
                       {a.result ? ` · ${a.result.score_pct}%` : ""}
                     </Link>
@@ -154,7 +156,6 @@ export function PracticeSessionPage() {
     kind: Command["kind"],
     action?: string,
     retry = false,
-    target?: string,
     event?: Command["event"],
     changedValues?: Record<string, Value>,
   ) => {
@@ -166,7 +167,6 @@ export function PracticeSessionPage() {
           expected_revision: s.revision,
           kind,
           action,
-          target,
           event,
           values: ["action", "save", "finish", "event", "hint"].includes(kind)
             ? editableValues(s.screen, changedValues ?? values)
@@ -277,6 +277,15 @@ export function PracticeSessionPage() {
           <Result s={s} />
           <PracticeHistory id={s.id} revision={s.revision} />
         </div>
+      ) : s.status === "abandoned" ? (
+        <div className="card card-pad stack">
+          <p>{t("practice.abandoned")}</p>
+          <Link className="back-link" to="/practice">
+            <Icon name="arrowLeft" size={18} />
+            {t("practice.title")}
+          </Link>
+          <PracticeHistory id={s.id} revision={s.revision} />
+        </div>
       ) : (
         <div className="practice-shell">
           <aside className="practice-side">
@@ -288,21 +297,10 @@ export function PracticeSessionPage() {
                   className={s.screen.id === n.id ? "active" : ""}
                   aria-current={s.screen.id === n.id ? "step" : undefined}
                 >
-                  {s.mode === "sandbox" ? (
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={busy || dirty || !!pending.current}
-                      onClick={() => send("navigate", undefined, false, n.id)}
-                    >
-                      {n.title[lang]}
-                    </button>
-                  ) : (
-                    <>
-                      {n.visited ? "✓ " : ""}
-                      {n.title[lang]}
-                    </>
-                  )}
+                  <>
+                    {n.visited ? "✓ " : ""}
+                    {n.title[lang]}
+                  </>
                 </li>
               ))}
             </ol>
@@ -333,77 +331,6 @@ export function PracticeSessionPage() {
                 feedback={s.feedback}
                 sessionId={s.id}
               />
-              {s.mode === "sandbox" && (
-                <section className="practice-workspace stack">
-                  <div className="spread">
-                    <h3>{t("practice.virtual_applications")}</h3>
-                    <button
-                      className="btn"
-                      disabled={busy || dirty || !!pending.current}
-                      onClick={() => send("new_record")}
-                    >
-                      {t("practice.new_application")}
-                    </button>
-                  </div>
-                  <div className="practice-table">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>{t("practice.identifier")}</th>
-                          <th>{t("practice.status")}</th>
-                          <th>{t("practice.action")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {s.records.map((r) => (
-                          <tr key={r.id}>
-                            <td>{r.id}</td>
-                            <td>
-                              {t(
-                                r.status === "submitted"
-                                  ? "practice.submitted"
-                                  : "practice.draft",
-                              )}
-                            </td>
-                            <td>
-                              <div className="row">
-                                <button
-                                  className="btn"
-                                  disabled={
-                                    busy ||
-                                    dirty ||
-                                    !!pending.current ||
-                                    s.record_id === r.id
-                                  }
-                                  onClick={() =>
-                                    send("open_record", undefined, false, r.id)
-                                  }
-                                >
-                                  {t("practice.open")}
-                                </button>
-                                <button
-                                  className="btn"
-                                  disabled={busy || dirty || !!pending.current}
-                                  onClick={() =>
-                                    send(
-                                      "delete_record",
-                                      undefined,
-                                      false,
-                                      r.id,
-                                    )
-                                  }
-                                >
-                                  {t("practice.remove")}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              )}
               <PracticeHistory id={s.id} revision={s.revision} />
             </div>
             <footer className="row practice-wrap practice-footer">
@@ -426,15 +353,6 @@ export function PracticeSessionPage() {
               >
                 {t("practice.save_progress")}
               </button>
-              {s.mode === "sandbox" && (
-                <button
-                  className="btn"
-                  disabled={busy || !!pending.current}
-                  onClick={() => send("reset")}
-                >
-                  {t("practice.reset")}
-                </button>
-              )}
               {s.can_finish && (
                 <button
                   className="btn btn-primary"
@@ -462,7 +380,11 @@ function PracticeHistory({ id, revision }: { id: number; revision: number }) {
       <ol className="practice-history">
         {data?.map((a) => (
           <li key={a.id}>
-            {dateTime(a.at)} · {t(`practice.command.${a.kind}`)} · {a.screen_id}
+            {dateTime(a.at)} ·{" "}
+            {t(`practice.command.${a.kind}`, {
+              defaultValue: t("practice.command.action"),
+            })}{" "}
+            · {a.screen_id}
             {a.invalid ? ` · ${t("practice.invalid_logged")}` : ""}
           </li>
         ))}

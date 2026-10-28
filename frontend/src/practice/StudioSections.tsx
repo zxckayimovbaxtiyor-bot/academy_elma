@@ -234,7 +234,7 @@ export function StudioLesson({
               })
             }
           >
-            {["guided", "sandbox", "exam"].map((m) => (
+            {["guided", "exam"].map((m) => (
               <option key={m} value={m}>
                 {t(`practice.mode.${m}`)}
               </option>

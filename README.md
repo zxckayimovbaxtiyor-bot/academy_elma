@@ -10,8 +10,8 @@ The audit, staged modernization plan and completed first-stage fixes are recorde
 
 ## Interactive practice
 
-The Practice module adds a versioned scenario engine, guided training, a free sandbox
-with synthetic applications, server-graded practical exams, a visual RU/UZ constructor,
+The Practice module adds a versioned scenario engine, guided training,
+server-graded practical exams, a visual RU/UZ constructor,
 and branch-scoped analytics. Open `/practice` or `/admin/practice`.
 Existing certification rules stay unchanged until an author explicitly requires practice.
 

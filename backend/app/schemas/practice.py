@@ -16,7 +16,7 @@ from pydantic import (
 
 Key = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")]
 Scalar = str | int | float | bool | None
-Mode = Literal["guided", "sandbox", "exam"]
+Mode = Literal["guided", "exam"]
 COMPONENTS = (
     "button",
     "text",
@@ -544,18 +544,12 @@ class Command(Strict):
         "action",
         "save",
         "back",
-        "reset",
         "finish",
-        "navigate",
-        "new_record",
-        "open_record",
-        "delete_record",
         "event",
         "hint",
     ] = "action"
     action: Key | None = None
     event: Literal["click", "change", "submit"] | None = None
-    target: Key | None = None
     values: dict[str, Scalar] = Field(default_factory=dict, max_length=50)
 
     @model_validator(mode="after")

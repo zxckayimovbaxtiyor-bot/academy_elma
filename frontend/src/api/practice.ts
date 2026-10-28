@@ -48,7 +48,7 @@ export const inputTypes: readonly string[] = [
   "dialog",
 ];
 export type ComponentType = (typeof componentTypes)[number];
-export type Mode = "guided" | "sandbox" | "exam";
+export type Mode = "guided" | "exam";
 export interface Condition {
   field: string;
   op:
@@ -242,13 +242,6 @@ export interface PSession {
   navigation: { id: string; title: LText; visited: boolean }[];
   result: PResult | null;
   feedback?: Mistake[];
-  records: {
-    id: string;
-    values: Record<string, Value>;
-    screen: string;
-    status: string;
-  }[];
-  record_id: string | null;
   messages?: { type: string; message: LText }[];
   hints_used?: number;
   time_limit_s?: number | null;
@@ -274,17 +267,11 @@ export interface Command {
     | "action"
     | "save"
     | "back"
-    | "reset"
     | "finish"
-    | "navigate"
-    | "new_record"
-    | "open_record"
-    | "delete_record"
     | "event"
     | "hint";
   event?: "click" | "change" | "submit";
   action?: string;
-  target?: string;
   values?: Record<string, Value>;
 }
 export interface Preview {

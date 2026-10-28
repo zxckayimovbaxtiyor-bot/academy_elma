@@ -144,11 +144,10 @@ def test_adding_program_preserves_active_session_and_completed_result(db, setup,
     advance(db, user, active)
     advance(db, user, active)
     advance(db, user, active, {"client_id": "TEST-001"}, kind="save")
-    snapshots = {
-        s.id: deepcopy(practice.payload(db, s)) for s in (active, completed)
-    }
+    snapshots = {s.id: deepcopy(practice.payload(db, s)) for s in (active, completed)}
     added = practice.create(
-        db, admin,
+        db,
+        admin,
         ScenarioIn(module_id=row.module_id, definition=demo_definition()),
     )
     draft = practice.version(db, added.id, published=False)
@@ -257,7 +256,7 @@ def test_fields_from_other_screens_and_results_cannot_be_forged(db, setup, value
         advance(db, user, s, values)
 
 
-@pytest.mark.parametrize("kind", ["back", "reset", "finish"])
+@pytest.mark.parametrize("kind", ["back", "finish"])
 def test_exam_cannot_reset_back_or_skip_to_finish(db, setup, kind):
     _, user, row = setup
     s = practice.start(db, user, row.id, "exam")
@@ -265,15 +264,13 @@ def test_exam_cannot_reset_back_or_skip_to_finish(db, setup, kind):
         advance(db, user, s, kind=kind)
 
 
-def test_sandbox_reset_and_guided_back(db, setup):
+def test_guided_back(db, setup):
     _, user, row = setup
-    s = practice.start(db, user, row.id, "sandbox")
+    s = practice.start(db, user, row.id, "guided")
     advance(db, user, s)
     advance(db, user, s)
     advance(db, user, s, kind="back")
     assert s.state["screen"] == "lending"
-    advance(db, user, s, kind="reset")
-    assert s.state["screen"] == "start" and s.state["values"] == {}
     assert (
         len(
             list(
@@ -282,8 +279,165 @@ def test_sandbox_reset_and_guided_back(db, setup):
                 )
             )
         )
-        == 4
+        == 3
     )
+
+
+@pytest.mark.parametrize(
+    "kind", ["reset", "navigate", "new_record", "open_record", "delete_record"]
+)
+def test_retired_workspace_commands_are_rejected(client, db, setup, kind):
+    _, user, row = setup
+    s = practice.start(db, user, row.id, "guided")
+    login(client, user)
+    response = client.post(
+        f"/api/v1/me/practice-sessions/{s.id}/commands",
+        json={"request_id": uuid.uuid4().hex, "expected_revision": 0, "kind": kind},
+    )
+    assert response.status_code == 422
+    assert s.revision == 0
+
+
+def test_retired_mode_rejected_for_learners_authors_and_service(client, db, setup):
+    author, user, row = setup
+    login(client, user)
+    assert (
+        client.post(
+            f"/api/v1/me/practices/{row.id}/sessions", json={"mode": "sandbox"}
+        ).status_code
+        == 422
+    )
+    with pytest.raises(AppError):
+        practice.start(db, user, row.id, "sandbox")
+    login(client, author)
+    assert (
+        client.post(
+            "/api/v1/admin/practices/preview/step",
+            json={
+                "mode": "sandbox",
+                "definition": demo_definition().model_dump(),
+                "state": practice_engine.initial(demo_definition()),
+                "command": {
+                    "request_id": "removed-mode",
+                    "expected_revision": 0,
+                    "kind": "save",
+                },
+            },
+        ).status_code
+        == 422
+    )
+    data = demo_definition().model_dump()
+    data["metadata"]["default_mode"] = "sandbox"
+    with pytest.raises(ValidationError):
+        Definition.model_validate(data)
+
+
+def test_retirement_migration_archives_data_and_preserves_other_progress(db, setup):
+    from alembic import command
+    from alembic.config import Config
+    from pathlib import Path
+    from copy import deepcopy
+    from app.models.practice import PracticeResult
+
+    _, user, row = setup
+    guided = practice.start(db, user, row.id, "guided")
+    advance(db, user, guided)
+    original_guided = deepcopy(guided.state)
+    cfg = Config(str(Path(__file__).resolve().parent.parent / "alembic.ini"))
+    cfg.attributes.update(connection=db.connection(), configure_logger=False)
+    command.downgrade(cfg, "0005")
+    previous_version = practice.version(db, row.id)
+    definition = deepcopy(previous_version.definition)
+    definition["metadata"]["default_mode"] = "sandbox"
+    v = PracticeScenarioVersion(
+        scenario_id=row.id,
+        number=2,
+        revision=0,
+        definition=definition,
+        published_at=guided.started_at,
+        published_by=previous_version.published_by,
+    )
+    db.add(v)
+    db.flush()
+    old_state = {
+        **deepcopy(guided.state),
+        "records": [{"id": "application_1", "values": {"amount": 50000}}],
+        "record_id": "application_1",
+        "next_record": 2,
+    }
+    retired = PracticeSession(
+        user_id=user.id,
+        scenario_id=row.id,
+        version_id=v.id,
+        release_id=guided.release_id,
+        mode="sandbox",
+        status="active",
+        state=old_state,
+        policy=guided.policy,
+        started_at=guided.started_at,
+        timing=guided.timing,
+    )
+    completed = PracticeSession(
+        user_id=user.id,
+        scenario_id=row.id,
+        version_id=v.id,
+        release_id=guided.release_id,
+        mode="sandbox",
+        status="completed",
+        state=old_state,
+        policy=guided.policy,
+        started_at=guided.started_at,
+        finished_at=guided.started_at,
+        timing=guided.timing,
+    )
+    db.add_all([retired, completed])
+    db.flush()
+    result = PracticeResult(
+        session_id=completed.id, score_pct=100, passed=True, duration_s=42, errors=[]
+    )
+    db.add(result)
+    action = PracticeAction(
+        session_id=retired.id,
+        request_id="legacy-record",
+        fingerprint="0" * 64,
+        screen_id=old_state["screen"],
+        kind="new_record",
+        errors=[],
+        response={
+            "mode": "sandbox",
+            "records": old_state["records"],
+            "record_id": "application_1",
+        },
+    )
+    db.add(action)
+    db.flush()
+    original_response = deepcopy(action.response)
+    command.upgrade(cfg, "head")
+    db.expire_all()
+    assert retired.mode == "guided" and retired.status == "abandoned"
+    assert "records" not in retired.state
+    assert completed.status == "completed" and completed.mode == "guided"
+    assert practice.result_data(db, completed.id)["duration_s"] == 42
+    assert guided.state == original_guided and guided.status == "active"
+    archived = db.connection().scalar(
+        text(
+            "SELECT original FROM practice_retired_archive WHERE source_table='practice_session' AND source_id=:id"
+        ),
+        {"id": retired.id},
+    )
+    assert archived["state"] == old_state and archived["mode"] == "sandbox"
+    assert v.definition["metadata"]["default_mode"] == "guided"
+    assert action.response == {"mode": "guided"}
+    command.downgrade(cfg, "0005")
+    db.expire_all()
+    assert (
+        retired.state == old_state
+        and retired.status == "active"
+        and retired.mode == "sandbox"
+    )
+    assert action.response == original_response
+    assert v.definition["metadata"]["default_mode"] == "sandbox"
+    command.upgrade(cfg, "head")
 
 
 def test_attempt_limit_and_repeat_policy(db, setup):
@@ -295,7 +449,7 @@ def test_attempt_limit_and_repeat_policy(db, setup):
     finish_demo(db, user, practice.start(db, user, row.id, "exam"))
     with pytest.raises(AppError, match="attempts_exhausted"):
         practice.start(db, user, row.id, "exam")
-    assert practice.start(db, user, row.id, "sandbox")
+    assert practice.start(db, user, row.id, "guided")
 
 
 def test_exam_payload_hides_rules_and_hints(db, setup):
@@ -492,52 +646,6 @@ def test_preview_uses_engine_and_never_creates_result(client, db, setup):
     assert not list(db.scalars(select(PracticeSession)))
 
 
-def test_sandbox_multiple_records_are_persisted_and_isolated(db, setup, reference):
-    _, user, row = setup
-    s = practice.start(db, user, row.id, "sandbox")
-    first = s.state["record_id"]
-    practice.command(
-        db,
-        user,
-        s.id,
-        Command(
-            request_id=uuid.uuid4().hex,
-            expected_revision=s.revision,
-            kind="navigate",
-            target="form",
-        ),
-    )
-    advance(db, user, s, {"amount": 1000, "months": 1}, kind="save")
-    practice.command(db, user, s.id, cmd(s, kind="new_record"))
-    assert len(s.state["records"]) == 2 and s.state["values"] == {}
-    practice.command(
-        db,
-        user,
-        s.id,
-        Command(
-            request_id=uuid.uuid4().hex,
-            expected_revision=s.revision,
-            kind="open_record",
-            target=first,
-        ),
-    )
-    assert s.state["values"]["amount"] == 1000 and s.state["screen"] == "form"
-    other = make_learner(db, reference)
-    assert practice.start(db, other, row.id, "sandbox").state["values"] == {}
-    practice.command(
-        db,
-        user,
-        s.id,
-        Command(
-            request_id=uuid.uuid4().hex,
-            expected_revision=s.revision,
-            kind="delete_record",
-            target=first,
-        ),
-    )
-    assert len(s.state["records"]) == 1
-
-
 def test_individual_exam_task_is_server_selected_and_frozen(db, setup, monkeypatch):
     _, user, row = setup
     monkeypatch.setattr(
@@ -719,7 +827,7 @@ def test_practice_migration_roundtrip_on_test_database(engine):
         command.downgrade(cfg, "0001")
         command.upgrade(cfg, "head")
         assert (
-            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0005"
+            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0006"
         )
 
 

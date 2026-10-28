@@ -240,7 +240,6 @@
       "idempotency_conflict": "Takroriy soʻrovda boshqa maʼlumotlar bor. Sahifani yangilang.",
       "finished": "Bu amaliyot allaqachon yakunlangan.",
       "action_limit": "Seans amallari chegarasiga yetildi.",
-      "record_limit": "20 tagacha oʻquv arizasi mumkin. Keraksizini oʻchiring yoki mashq muhitini tiklang.",
       "lesson_in_use": "Dars amaliyot ssenariyiga bogʻlangan. Oʻchirish mumkin emas.",
       "invalid_definition": "Dars tuzilmasi va RU/UZ tarjimalarini tekshiring",
       "event_limit": "Amallar zanjiri juda uzun. Oʻtishlarni tekshiring."
@@ -1052,7 +1051,7 @@
     "progress": "Bosqichlar: {{done}} / {{total}}",
     "back": "Orqaga",
     "save_progress": "Jarayonni saqlash",
-    "reset": "Mashq muhitini tiklash",
+    "reset": "Oldindan koʻrishni qayta boshlash",
     "finish": "Amaliyotni yakunlash",
     "passed": "Amaliyotdan oʻtildi",
     "failed": "Qayta urinish kerak",
@@ -1129,7 +1128,6 @@
     "in_progress": "Jarayonda",
     "mode": {
       "guided": "Koʻrsatmalar bilan oʻrganish",
-      "sandbox": "Erkin mashq muhiti",
       "exam": "Amaliy imtihon"
     },
     "component": {
@@ -1222,8 +1220,6 @@
       "verified": "Hujjatlar tekshirildi",
       "consent": "Mijoz roziligi"
     },
-    "virtual_applications": "Virtual arizalar",
-    "new_application": "Ariza yaratish",
     "submitted": "Yuborildi (oʻquv)",
     "open": "Ochish",
     "individual_tasks": "Shaxsiy topshiriqlar",
@@ -1238,12 +1234,7 @@
       "action": "Amal",
       "save": "Saqlash",
       "back": "Orqaga qaytish",
-      "reset": "Tiklash",
       "finish": "Yakunlash",
-      "navigate": "Boʻlimga oʻtish",
-      "new_record": "Ariza yaratish",
-      "open_record": "Arizani ochish",
-      "delete_record": "Oʻquv arizasini oʻchirish",
       "event": "Hodisa",
       "hint": "Yordam"
     },
@@ -1254,7 +1245,8 @@
     "points": "Ballar",
     "options": "Javob variantlari",
     "title_field": "Nom",
-    "roles": "Ruxsat etilgan rollar"
+    "roles": "Ruxsat etilgan rollar",
+    "abandoned": "Urinish yopilgan. Katalogdan yangi mashqni boshlang."
   },
   "studio": {
     "title": "Darslar konstruktori",

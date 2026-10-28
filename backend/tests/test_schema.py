@@ -34,7 +34,7 @@ def _fails(db, *objects) -> None:
 def test_migration_creates_every_planned_table(db):
     tables = set(inspect(db.connection()).get_table_names()) - {"alembic_version"}
     assert tables == set(Base.metadata.tables)
-    assert len(tables) == 33
+    assert len(tables) == 34
 
 
 def test_certificate_number_sequence_exists(db):

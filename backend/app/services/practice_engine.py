@@ -207,70 +207,12 @@ def task_definition(definition: Definition, state: dict) -> Definition:
     return definition
 
 
-def sync_record(state: dict, definition: Definition):
-    for record in state.get("records", []):
-        if record["id"] == state.get("record_id"):
-            record.update(
-                values=deepcopy(state["values"]),
-                screen=state["screen"],
-                status=(
-                    "submitted" if state["screen"] in definition.completion else "draft"
-                ),
-            )
-
-
-def workspace(definition: Definition, state: dict, command: Command) -> dict:
-    sync_record(state, definition)
-    records = state.get("records", [])
-    if command.kind == "navigate":
-        if command.target not in {s.id for s in definition.screens}:
-            raise AppError(409, "practice.invalid_action")
-        state["history"] = (state["history"] + [state["screen"]])[-100:]
-        state["screen"] = command.target
-        state["visited"] = list(dict.fromkeys([*state["visited"], command.target]))
-        return state
-    if command.kind == "new_record":
-        if len(records) >= 20:
-            raise AppError(409, "practice.record_limit")
-        n = state.get("next_record", 1)
-        record = {
-            "id": f"application_{n}",
-            "values": {},
-            "screen": definition.start,
-            "status": "draft",
-        }
-        records.append(record)
-        state["next_record"] = n + 1
-    else:
-        record = next((r for r in records if r["id"] == command.target), None)
-        if record is None:
-            raise AppError(409, "practice.invalid_action")
-        if command.kind == "delete_record":
-            records.remove(record)
-            record = records[0] if records else None
-    state.update(initial(definition))
-    state["records"] = records
-    state["record_id"] = record["id"] if record else None
-    if record:
-        state["values"] = deepcopy(record["values"])
-        state["screen"] = record["screen"]
-    return state
-
-
 def apply(
     definition: Definition, state: dict, command: Command, mode: str
 ) -> tuple[dict, list[dict], bool]:
     state = deepcopy(state)
     definition = task_definition(definition, state)
     screen = next(s for s in definition.screens if s.id == state["screen"])
-    if command.kind in ("navigate", "new_record", "open_record", "delete_record"):
-        if mode != "sandbox":
-            raise AppError(409, "practice.invalid_action")
-        return workspace(definition, state, command), [], False
-    if command.kind == "reset":
-        if mode != "sandbox":
-            raise AppError(409, "practice.invalid_action")
-        return initial(definition), [], False
     if command.kind == "back":
         if mode == "exam" or not state["history"]:
             raise AppError(409, "practice.invalid_action")

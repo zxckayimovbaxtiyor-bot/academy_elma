@@ -83,7 +83,7 @@ class PracticeSession(Base):
             unique=True,
             postgresql_where=text("status = 'active'"),
         ),
-        CheckConstraint("mode IN ('guided','sandbox','exam')", name="mode"),
+        CheckConstraint("mode IN ('guided','exam')", name="mode"),
         CheckConstraint("status IN ('active','completed','abandoned')", name="status"),
     )
     id: Mapped[IdPk]
@@ -166,3 +166,12 @@ class PracticeUpload(Base):
     content_type: Mapped[str] = mapped_column(String(40))
     data: Mapped[str] = mapped_column(Text)
     created_at: Mapped[CreatedAt]
+
+
+class PracticeRetiredArchive(Base):
+    """Original retired rows retained for recovery; never used by the practice engine."""
+
+    __tablename__ = "practice_retired_archive"
+    source_table: Mapped[str] = mapped_column(String(40), primary_key=True)
+    source_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    original: Mapped[dict[str, Any]] = mapped_column(JSONB)

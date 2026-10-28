@@ -55,7 +55,7 @@ export function PracticeAnalytics({
           }}
         >
           <option value="all">{t("reports.all")}</option>
-          {["guided", "sandbox", "exam"].map((m) => (
+          {["guided", "exam"].map((m) => (
             <option value={m} key={m}>
               {t(`practice.mode.${m}`)}
             </option>

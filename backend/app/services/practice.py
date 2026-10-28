@@ -246,6 +246,8 @@ def catalog(db, user, module_id=None, lesson_id=None):
 
 
 def start(db, user, sid, mode):
+    if mode not in ("guided", "exam"):
+        raise AppError(422, "practice.invalid_action")
     # Serializes double starts and attempt-limit checks across tabs.
     db.scalar(select(AppUser.id).where(AppUser.id == user.id).with_for_update())
     row = scenario(db, sid)
@@ -312,14 +314,6 @@ def start(db, user, sid, mode):
         started_at=clock.utcnow(),
         timing=practice_time.initial(clock.utcnow()),
     )
-    if mode == "sandbox":
-        s.state = engine.workspace(
-            Definition.model_validate(v.definition),
-            s.state,
-            Command(
-                request_id="initial-record", expected_revision=0, kind="new_record"
-            ),
-        )
     db.add(s)
     db.flush()
     audit.record(
@@ -400,8 +394,6 @@ def payload(db, s):
         "started_at": s.started_at.isoformat(),
         "elapsed_s": practice_time.seconds(s.timing, clock.utcnow()),
         "policy": s.policy,
-        "records": s.state.get("records", []) if s.mode == "sandbox" else [],
-        "record_id": s.state.get("record_id") if s.mode == "sandbox" else None,
         **public,
         "result": result_data(db, s.id),
     }
@@ -464,8 +456,6 @@ def command(db, user, session_id, cmd: Command):
         errors, finished = [], True
     else:
         s.state, errors, finished = engine.apply(definition, s.state, cmd, s.mode)
-    if s.mode == "sandbox":
-        engine.sync_record(s.state, definition)
     now = clock.utcnow()
     s.timing = practice_time.command(s.timing, now, finished=finished)
     s.revision += 1

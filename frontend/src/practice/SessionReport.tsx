@@ -72,7 +72,9 @@ export function SessionReport({
                 <li key={a.id}>
                   <div className="spread">
                     <strong>
-                      {t(`practice.command.${a.kind}`)} ·{" "}
+                      {t(`practice.command.${a.kind}`, {
+                        defaultValue: t("practice.command.action"),
+                      })} ·{" "}
                       {a.screen_title?.[lang] ?? a.screen}
                       {a.action_label ? ` · ${a.action_label[lang]}` : ""}
                     </strong>
